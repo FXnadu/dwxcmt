@@ -581,16 +581,28 @@
       img.alt = '';
       img.className = 'lc-avatar-img';
       var idx = 0;
-      // 逐个加载候选头像，全部失败才回退字母头像
-      img.onerror = function () {
+      var done = false;
+      var timer = null;
+      // 单个候选加载超时（毫秒）：第三方服务（如 gravatar.com）国内可能长时间挂起
+      // 既不成功也不报错，超时后强制跳到下一个候选，避免把后续头像堵死
+      var AVATAR_TIMEOUT = 4000;
+      function avatarNext() {
+        clearTimeout(timer);
+        if (done) return;
         idx++;
         if (idx < candidates.length) {
           img.src = candidates[idx];
+          timer = setTimeout(avatarNext, AVATAR_TIMEOUT);
         } else {
+          done = true;
           avatar.innerHTML = letterAvatar(comment.nick);
         }
-      };
+      }
+      img.onload = function () { clearTimeout(timer); done = true; };
+      // 逐个加载候选头像，全部失败/超时才回退字母头像
+      img.onerror = avatarNext;
       img.src = candidates[0];
+      timer = setTimeout(avatarNext, AVATAR_TIMEOUT);
       avatar.appendChild(img);
     } else {
       avatar.innerHTML = letterAvatar(comment.nick);
