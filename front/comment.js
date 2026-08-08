@@ -5,9 +5,9 @@
  *   <div data-page-id="/post/hello.html" data-server="https://api.example.com"></div>
  *
  *   <!-- 方式 2：自动识别当前路径（推荐模板统一引入） -->
- *   <div id="light-comment" data-server="https://api.example.com"></div>
+ *   <div id="dwx-comment" data-server="https://api.example.com"></div>
  *   <script>
- *     window.LightComment = { server: 'https://api.example.com', site: 'default' };
+ *     window.dwxComment = { server: 'https://api.example.com', site: 'default' };
  *   </script>
  *
  *   <script src="/comment/comment.js" defer></script>
@@ -82,7 +82,7 @@
     el.dispatchEvent(evt);
   }
 
-  /* ========== 头像：有邮箱由后端返回 Gravatar，无邮箱生成字母头像 ========== */
+  /* ========== 头像：有邮箱由后端返回真实头像候选（Gravatar/Cravatar/QQ），全部失败生成字母头像 ========== */
 
   function hashString(str) {
     var h = 0;
@@ -131,7 +131,8 @@
   function request(cfg, opts) {
     var xhr = new XMLHttpRequest();
     xhr.open(opts.method || 'GET', cfg.server + opts.url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+    // 仅 POST/PUT 等带请求体的请求设置 Content-Type，避免 GET 触发 CORS 预检
+    if (opts.data) xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) return;
       var res = null;
@@ -151,11 +152,11 @@
 
   /* ========== 组件 ========== */
 
-  function LightComment(el) {
+  function dwxComment(el) {
     this.el = el;
     // 优先级：容器 data-page-id > 当前页面路径 > 空
     this.pageId = trim(el.getAttribute('data-page-id')) || getPageId();
-    this.cfg = extend(extend({}, DEFAULTS), window.LightComment || {});
+    this.cfg = extend(extend({}, DEFAULTS), window.dwxComment || {});
     // 容器 data-* 优先级最高
     var attrMap = {
       'data-server': 'server', 'data-site': 'site', 'data-locale': 'locale',
@@ -179,7 +180,7 @@
     this.build();
   }
 
-  LightComment.prototype.build = function () {
+  dwxComment.prototype.build = function () {
     var self = this;
     if (!this.pageId) {
       this.el.innerHTML = '<p class="lc-error">错误：无法确定页面标识，请填写 data-page-id 属性</p>';
@@ -190,11 +191,17 @@
         '<div class="lc-head">' +
           '<span class="lc-title">评论</span><span class="lc-count"></span>' +
           '<span class="lc-spacer"></span>' +
-          '<select class="lc-sort" aria-label="排序方式">' +
-            '<option value="asc">正序</option>' +
-            '<option value="desc">倒序</option>' +
-            '<option value="hot">热度</option>' +
-          '</select>' +
+          '<div class="lc-sort" aria-label="排序方式">' +
+            '<button type="button" class="lc-sort-btn" aria-haspopup="listbox" aria-expanded="false">' +
+              '<span class="lc-sort-label">正序</span>' +
+              '<svg class="lc-sort-arrow" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 6l4 4 4-4z"/></svg>' +
+            '</button>' +
+            '<ul class="lc-sort-menu" role="listbox" hidden>' +
+              '<li role="option" data-value="asc">正序</li>' +
+              '<li role="option" data-value="desc">倒序</li>' +
+              '<li role="option" data-value="hot">热度</li>' +
+            '</ul>' +
+          '</div>' +
         '</div>' +
         '<form class="lc-form" novalidate>' +
           '<div class="lc-form-row">' +
@@ -224,10 +231,13 @@
     this.moreEl = this.el.querySelector('.lc-more');
     this.countEl = this.el.querySelector('.lc-count');
     this.sortEl = this.el.querySelector('.lc-sort');
+    this.sortBtnEl = this.el.querySelector('.lc-sort-btn');
+    this.sortLabelEl = this.el.querySelector('.lc-sort-label');
+    this.sortMenuEl = this.el.querySelector('.lc-sort-menu');
     this.formEl = this.el.querySelector('.lc-form');
 
     this.sort = this.cfg.sort || 'asc';
-    if (this.sortEl) this.sortEl.value = this.sort;
+    if (this.sortEl) this.setSortLabel();
     this.nickEl = this.el.querySelector('.lc-nick');
     this.emailEl = this.el.querySelector('.lc-email');
     this.linkEl = this.el.querySelector('.lc-link');
@@ -248,14 +258,57 @@
     dispatch(this.el, 'lc:ready', {});
   };
 
-  LightComment.prototype.bindEvents = function () {
+  // 同步自定义排序下拉的按钮文本与选项选中态
+  dwxComment.prototype.setSortLabel = function () {
+    var opts = this.sortMenuEl.querySelectorAll('[role="option"]');
+    for (var i = 0; i < opts.length; i++) {
+      if (opts[i].getAttribute('data-value') === this.sort) {
+        opts[i].setAttribute('aria-selected', 'true');
+        this.sortLabelEl.textContent = opts[i].textContent;
+      } else {
+        opts[i].removeAttribute('aria-selected');
+      }
+    }
+  };
+
+  dwxComment.prototype.bindEvents = function () {
     var self = this;
 
-    // 排序切换
+    // 排序切换（自定义下拉）
     if (this.sortEl) {
-      this.sortEl.addEventListener('change', function () {
-        self.sort = self.sortEl.value;
+      this.sortBtnEl.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var open = self.sortMenuEl.hidden;
+        self.sortMenuEl.hidden = !open;
+        self.sortBtnEl.setAttribute('aria-expanded', String(!open));
+        self.sortEl.classList.toggle('lc-open', !open);
+      });
+      this.sortMenuEl.addEventListener('click', function (e) {
+        var opt = e.target.closest('[role="option"]');
+        if (!opt) return;
+        self.sort = opt.getAttribute('data-value');
+        self.setSortLabel();
+        self.sortMenuEl.hidden = true;
+        self.sortBtnEl.setAttribute('aria-expanded', 'false');
+        self.sortEl.classList.remove('lc-open');
         self.loadPage(1);
+      });
+      // 点击外部关闭
+      document.addEventListener('click', function (e) {
+        if (!self.sortEl.contains(e.target) && !self.sortMenuEl.hidden) {
+          self.sortMenuEl.hidden = true;
+          self.sortBtnEl.setAttribute('aria-expanded', 'false');
+          self.sortEl.classList.remove('lc-open');
+        }
+      });
+      // Esc 关闭
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !self.sortMenuEl.hidden) {
+          self.sortMenuEl.hidden = true;
+          self.sortBtnEl.setAttribute('aria-expanded', 'false');
+          self.sortEl.classList.remove('lc-open');
+          self.sortBtnEl.focus();
+        }
       });
     }
 
@@ -302,7 +355,7 @@
     }
   };
 
-  LightComment.prototype.buildEmojiPanel = function () {
+  dwxComment.prototype.buildEmojiPanel = function () {
     var panel = this.el.querySelector('.lc-emoji-panel');
     for (var i = 0; i < EMOJIS.length; i++) {
       (function (emoji) {
@@ -331,7 +384,7 @@
   /* ========== 数据加载 ========== */
 
   // 加载站点配置（站长徽章文案 / 站长头像），默认「站长」+ 无头像
-  LightComment.prototype.loadSiteConfig = function () {
+  dwxComment.prototype.loadSiteConfig = function () {
     var self = this;
     request(this.cfg, {
       url: '/api/v1/site-config?site=' + encodeURIComponent(this.cfg.site),
@@ -346,7 +399,7 @@
     });
   };
 
-  LightComment.prototype.loadCount = function () {
+  dwxComment.prototype.loadCount = function () {
     var self = this;
     request(this.cfg, {
       url: '/api/v1/comments/count?pageId=' + encodeURIComponent(this.pageId) + '&site=' + encodeURIComponent(this.cfg.site),
@@ -358,7 +411,7 @@
     });
   };
 
-  LightComment.prototype.loadPage = function (page) {
+  dwxComment.prototype.loadPage = function (page) {
     var self = this;
     if (this.loading) return;
     this.loading = true;
@@ -391,7 +444,7 @@
     });
   };
 
-  LightComment.prototype.updateMoreBtn = function () {
+  dwxComment.prototype.updateMoreBtn = function () {
     var self = this;
     this.moreEl.innerHTML = '';
     this.moreEl.style.display = 'none';
@@ -409,7 +462,7 @@
 
   /* ========== 渲染 ========== */
 
-  LightComment.prototype.renderList = function (roots, children) {
+  dwxComment.prototype.renderList = function (roots, children) {
     var self = this;
     // 子评论按 parentId 分组
     var childrenMap = {};
@@ -440,26 +493,35 @@
     }
   };
 
-  LightComment.prototype.createCommentNode = function (comment, depth, parentId) {
+  dwxComment.prototype.createCommentNode = function (comment, depth, parentId) {
     var self = this;
     var wrap = document.createElement('div');
     wrap.className = 'lc-comment';
     wrap.setAttribute('data-id', comment.id);
 
-    // 头像：站长优先使用配置的站长头像；其次 Gravatar；最后字母头像
+    // 头像候选：站长头像 → 后端返回的真实头像（Gravatar/Cravatar/QQ）→ 字母头像兜底
     var avatar = document.createElement('div');
     avatar.className = 'lc-avatar';
-    var avatarUrl = comment.avatarUrl;
-    if (comment.isAdmin && this.siteConfig.adminAvatar) avatarUrl = this.siteConfig.adminAvatar;
-    if (avatarUrl) {
+    var candidates = [];
+    if (comment.isAdmin && this.siteConfig.adminAvatar) candidates.push(this.siteConfig.adminAvatar);
+    if (comment.avatarUrls && comment.avatarUrls.length) {
+      for (var k = 0; k < comment.avatarUrls.length; k++) candidates.push(comment.avatarUrls[k]);
+    }
+    if (candidates.length > 0) {
       var img = document.createElement('img');
-      img.src = avatarUrl;
       img.alt = '';
       img.className = 'lc-avatar-img';
-      // 头像加载失败（邮箱无注册头像等）时回退为字母头像
+      var idx = 0;
+      // 逐个加载候选头像，全部失败才回退字母头像
       img.onerror = function () {
-        avatar.innerHTML = letterAvatar(comment.nick);
+        idx++;
+        if (idx < candidates.length) {
+          img.src = candidates[idx];
+        } else {
+          avatar.innerHTML = letterAvatar(comment.nick);
+        }
       };
+      img.src = candidates[0];
       avatar.appendChild(img);
     } else {
       avatar.innerHTML = letterAvatar(comment.nick);
@@ -574,7 +636,7 @@
     return wrap;
   };
 
-  LightComment.prototype.like = function (id, btn) {
+  dwxComment.prototype.like = function (id, btn) {
     var self = this;
     request(this.cfg, {
       method: 'POST',
@@ -590,7 +652,7 @@
 
   /* ========== 回复 ========== */
 
-  LightComment.prototype.startReply = function (comment) {
+  dwxComment.prototype.startReply = function (comment) {
     this.replyingTo = { id: comment.id, nick: comment.nick, rootId: comment.rootId || comment.id };
     this.replyBarEl.innerHTML = '';
     var span = document.createElement('span');
@@ -610,7 +672,7 @@
     this.textEl.focus();
   };
 
-  LightComment.prototype.cancelReply = function () {
+  dwxComment.prototype.cancelReply = function () {
     this.replyingTo = null;
     this.replyBarEl.innerHTML = '';
     this.replyBarEl.style.display = 'none';
@@ -618,7 +680,7 @@
 
   /* ========== 提交 ========== */
 
-  LightComment.prototype.submit = function () {
+  dwxComment.prototype.submit = function () {
     var self = this;
     var nick = trim(this.nickEl.value);
     var email = trim(this.emailEl.value);
@@ -696,7 +758,7 @@
 
   // 提交成功后本地插入评论，标记为待审核（背景加深）。
   // 根评论按当前排序插入；回复则挂到父评论下；父评论不在当前列表时退化为列表末尾。
-  LightComment.prototype.insertPendingComment = function (comment) {
+  dwxComment.prototype.insertPendingComment = function (comment) {
     var empty = this.listEl.querySelector('.lc-empty');
     if (empty) empty.parentNode.removeChild(empty);
 
@@ -730,13 +792,13 @@
 
   /* ========== 用户记忆 ========== */
 
-  LightComment.prototype.saveUser = function (nick, email, link) {
+  dwxComment.prototype.saveUser = function (nick, email, link) {
     try {
       localStorage.setItem('lc_user', JSON.stringify({ nick: nick, email: email, link: link }));
     } catch (e) { /* ignore */ }
   };
 
-  LightComment.prototype.restoreUser = function () {
+  dwxComment.prototype.restoreUser = function () {
     var self = this;
     var data = null;
     try { data = JSON.parse(localStorage.getItem('lc_user') || 'null'); } catch (e) { /* ignore */ }
@@ -750,7 +812,7 @@
 
   /* ========== Toast ========== */
 
-  LightComment.prototype.toast = function (msg, type) {
+  dwxComment.prototype.toast = function (msg, type) {
     var self = this;
     this.toastEl.textContent = msg;
     this.toastEl.className = 'lc-toast lc-toast-' + (type || 'info');
@@ -766,8 +828,8 @@
   function init() {
     var els = document.querySelectorAll('[data-page-id]');
     for (var i = 0; i < els.length; i++) {
-      if (!els[i]._lightComment) {
-        els[i]._lightComment = new LightComment(els[i]);
+      if (!els[i]._dwxComment) {
+        els[i]._dwxComment = new dwxComment(els[i]);
       }
     }
   }
@@ -778,5 +840,5 @@
     init();
   }
 
-  window.LightComment = LightComment;
+  window.dwxComment = dwxComment;
 })(window, document);

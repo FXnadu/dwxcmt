@@ -31,14 +31,14 @@ type Comment struct {
 
 // CommentDTO 对外响应结构（含管理端隐私字段）
 type CommentDTO struct {
-	ID         int64  `json:"id"`
-	PageID     string `json:"pageId"`
-	Site       string `json:"site"`
-	Nick       string `json:"nick"`
-	Link       string `json:"link"`
-	Content    string `json:"content"`
-	AvatarURL  string `json:"avatarUrl,omitempty"`
-	ParentID   int64  `json:"parentId"`
+	ID             int64  `json:"id"`
+	PageID         string `json:"pageId"`
+	Site           string `json:"site"`
+	Nick           string `json:"nick"`
+	Link           string `json:"link"`
+	Content        string `json:"content"`
+	AvatarUrls     []string `json:"avatarUrls,omitempty"`
+	ParentID       int64  `json:"parentId"`
 	RootID     int64  `json:"rootId"`
 	LikeCount  int    `json:"likeCount"`
 	IsPinned   int    `json:"isPinned"`
@@ -56,21 +56,21 @@ type CommentDTO struct {
 // ToDTO 转换为响应结构；includePrivate=true 时附带 email/ip/userAgent/isAudited
 func (c *Comment) ToDTO(includePrivate bool) CommentDTO {
 	dto := CommentDTO{
-		ID:         c.ID,
-		PageID:     c.PageID,
-		Site:       c.Site,
-		Nick:       c.Nick,
-		Link:       c.Link,
-		Content:    c.Content,
-		AvatarURL:  gravatarURL(c.Email),
-		ParentID:   c.ParentID,
-		RootID:     c.RootID,
-		LikeCount:  c.LikeCount,
-		IsPinned:   c.IsPinned,
-		IsAdmin:    c.IsAdmin,
-		CreateTime: c.CreateTime,
-		IsAudited:  c.IsAudited,
-		private:    includePrivate,
+		ID:             c.ID,
+		PageID:         c.PageID,
+		Site:           c.Site,
+		Nick:           c.Nick,
+		Link:           c.Link,
+		Content:        c.Content,
+		AvatarUrls:     avatarCandidates(c.Email),
+		ParentID:       c.ParentID,
+		RootID:         c.RootID,
+		LikeCount:      c.LikeCount,
+		IsPinned:       c.IsPinned,
+		IsAdmin:        c.IsAdmin,
+		CreateTime:     c.CreateTime,
+		IsAudited:      c.IsAudited,
+		private:        includePrivate,
 	}
 	if includePrivate {
 		dto.Email = c.Email
@@ -91,8 +91,8 @@ func (d CommentDTO) MarshalJSON() ([]byte, error) {
 		"likeCount": d.LikeCount, "isPinned": d.IsPinned,
 		"createTime": d.CreateTime,
 	}
-	if d.AvatarURL != "" {
-		m["avatarUrl"] = d.AvatarURL
+	if len(d.AvatarUrls) > 0 {
+		m["avatarUrls"] = d.AvatarUrls
 	}
 	if d.IsAdmin != 0 {
 		m["isAdmin"] = d.IsAdmin
@@ -112,14 +112,39 @@ func (d CommentDTO) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// gravatarURL 有邮箱时返回 Gravatar 头像地址（不暴露邮箱本身）
-func gravatarURL(email string) string {
+// avatarCandidates 有邮箱时返回有序的真实头像候选地址（Gravatar → Cravatar → QQ 头像）。
+// 只返回第三方服务的查询地址，不暴露邮箱本身；前端按顺序加载，全部失败再回退字母头像。
+// QQ 邮箱（@qq.com 且本地为纯数字 QQ 号）追加腾讯 qlogo 接口，直接获取该 QQ 的真实头像（同 Waline 做法）。
+func avatarCandidates(email string) []string {
 	if email == "" {
-		return ""
+		return nil
 	}
 	lower := strings.ToLower(strings.TrimSpace(email))
 	sum := md5.Sum([]byte(lower))
-	return "https://www.gravatar.com/avatar/" + hex.EncodeToString(sum[:]) + "?d=404&s=48"
+	hash := hex.EncodeToString(sum[:])
+	cands := []string{
+		"https://www.gravatar.com/avatar/" + hash + "?d=404&s=48",
+		"https://cravatar.cn/avatar/" + hash + "?d=404&s=48",
+	}
+	if qq := qqFromEmail(lower); qq != "" {
+		cands = append(cands, "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=100")
+	}
+	return cands
+}
+
+// qqFromEmail 提取 QQ 邮箱中的 QQ 号（@qq.com 且本地部分须为纯数字），非 QQ 邮箱返回空串
+func qqFromEmail(lower string) string {
+	const suffix = "@qq.com"
+	if !strings.HasSuffix(lower, suffix) {
+		return ""
+	}
+	qq := strings.TrimSuffix(lower, suffix)
+	for _, r := range qq {
+		if r < '0' || r > '9' {
+			return ""
+		}
+	}
+	return qq
 }
 
 // ToPublic 公开响应（隐藏隐私字段）
