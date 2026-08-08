@@ -1,0 +1,50 @@
+# dwxComment 压测专用配置（不参与生产；数据库与端口均独立隔离）
+# 用法: light-comment.exe -config config/config-stress.yaml
+server:
+  port: 8080
+  mode: release            # release 关闭请求日志，贴近生产（压测主要观测内存）
+
+database:
+  path: ./stress.db
+
+auth:
+  jwt_secret: "stress-test-secret-9f8e7d6c5b4a39281706f5e4d3c2b1a0"
+  jwt_ttl: 86400
+
+qq_oauth:
+  app_id: ""
+  app_key: ""
+  redirect_uri: ""
+
+github_oauth:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: ""
+
+smtp:                      # 压测不发送邮件
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  use_ssl: false
+
+# 压测放宽限流，让并发真正打穿写路径（生产为 5 rps / 20 条/天）
+rate_limit:
+  requests_per_second: 50
+  comments_per_day: 1000
+
+comment:
+  content_max_length: 1000
+  nick_max_length: 20
+  max_pinned_per_page: 3
+  max_reply_depth: 3
+
+cors:
+  allowed_origins:
+    - "http://localhost:8080"
+    - "http://127.0.0.1:8080"
+
+trusted_proxy:
+  proxies:
+    - "127.0.0.1/32"
+    - "::1/128"

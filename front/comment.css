@@ -1,0 +1,279 @@
+/* dwxComment 评论组件样式 v0.3.0
+ *
+ * 视觉风格：与后台管理统一，低饱和紫灰、2px 小圆角、玻璃态表面。
+ * 所有颜色、圆角、间距均通过 CSS 变量声明，用户覆盖 .lc-wrap 内的变量即可自定义。
+ */
+.lc-wrap {
+  --lc-bg: transparent;
+  --lc-surface: rgba(255, 255, 255, 0.65);
+  --lc-surface-strong: rgba(255, 255, 255, 0.85);
+  --lc-text: #24262b;
+  --lc-text-2: rgba(36, 38, 43, 0.62);
+  --lc-border: rgba(36, 38, 43, 0.1);
+  --lc-border-hover: rgba(36, 38, 43, 0.22);
+  --lc-accent: #70687a;
+  --lc-accent-text: #fff;
+  --lc-hover: rgba(36, 38, 43, 0.04);
+  --lc-danger: rgba(220, 38, 38, 0.85);
+  --lc-admin-bg: rgba(217, 119, 6, 0.14);
+  --lc-admin-text: #92400e;
+  --lc-admin-border: rgba(217, 119, 6, 0.4);
+  --lc-pending-bg: rgba(217, 119, 6, 0.14);
+  --lc-pending-border: rgba(217, 119, 6, 0.45);
+  --lc-radius: 2px;
+  --lc-gap: 16px;
+
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  font-weight: 300;
+  color: var(--lc-text);
+  background: var(--lc-bg);
+  font-size: 14px;
+  line-height: 1.7;
+  padding-top: var(--lc-gap);
+  max-width: 100%;
+}
+
+/* 暗黑模式：容器 data-theme 覆盖系统偏好 */
+@media (prefers-color-scheme: dark) {
+  .lc-wrap:not([data-theme="light"]) {
+    --lc-bg: transparent;
+    --lc-surface: rgba(255, 255, 255, 0.04);
+    --lc-surface-strong: rgba(255, 255, 255, 0.07);
+    --lc-text: rgb(255, 252, 225);
+    --lc-text-2: rgba(196, 184, 206, 0.65);
+    --lc-border: rgba(255, 255, 255, 0.08);
+    --lc-border-hover: rgba(255, 255, 255, 0.18);
+    --lc-accent: #c4b8ce;
+    --lc-accent-text: #030305;
+    --lc-hover: rgba(255, 255, 255, 0.04);
+    --lc-danger: #fca5a5;
+    --lc-admin-bg: rgba(251, 191, 36, 0.14);
+    --lc-admin-text: #fbbf24;
+    --lc-admin-border: rgba(251, 191, 36, 0.45);
+    --lc-pending-bg: rgba(251, 191, 36, 0.16);
+    --lc-pending-border: rgba(251, 191, 36, 0.5);
+  }
+}
+.lc-wrap[data-theme="light"] {
+  --lc-bg: transparent;
+  --lc-surface: rgba(255, 255, 255, 0.65);
+  --lc-surface-strong: rgba(255, 255, 255, 0.85);
+  --lc-text: #24262b;
+  --lc-text-2: rgba(36, 38, 43, 0.62);
+  --lc-border: rgba(36, 38, 43, 0.1);
+  --lc-border-hover: rgba(36, 38, 43, 0.22);
+  --lc-accent: #70687a;
+  --lc-accent-text: #fff;
+  --lc-hover: rgba(36, 38, 43, 0.04);
+  --lc-danger: rgba(220, 38, 38, 0.85);
+}
+.lc-wrap[data-theme="dark"] {
+  --lc-bg: transparent;
+  --lc-surface: rgba(255, 255, 255, 0.04);
+  --lc-surface-strong: rgba(255, 255, 255, 0.07);
+  --lc-text: rgb(255, 252, 225);
+  --lc-text-2: rgba(196, 184, 206, 0.65);
+  --lc-border: rgba(255, 255, 255, 0.08);
+  --lc-border-hover: rgba(255, 255, 255, 0.18);
+  --lc-accent: #c4b8ce;
+  --lc-accent-text: #030305;
+  --lc-hover: rgba(255, 255, 255, 0.04);
+  --lc-danger: #fca5a5;
+  --lc-admin-bg: rgba(251, 191, 36, 0.14);
+  --lc-admin-text: #fbbf24;
+  --lc-admin-border: rgba(251, 191, 36, 0.45);
+  --lc-pending-bg: rgba(251, 191, 36, 0.16);
+  --lc-pending-border: rgba(251, 191, 36, 0.5);
+}
+
+/* 头部 */
+.lc-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.lc-title { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 16px; font-weight: 400; letter-spacing: -0.02em; }
+.lc-count { color: var(--lc-text-2); font-size: 13px; }
+.lc-spacer { flex: 1; }
+.lc-sort {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding: 5px 28px 5px 12px;
+  border: 1px solid var(--lc-border);
+  border-radius: var(--lc-radius);
+  background: var(--lc-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='M4 6l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center / 14px;
+  color: var(--lc-text);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.lc-sort:hover, .lc-sort:focus { border-color: var(--lc-border-hover); background-color: var(--lc-surface-strong); }
+.lc-sort:focus-visible { box-shadow: 0 0 0 2px var(--lc-border-hover); }
+
+.lc-empty { color: var(--lc-text-2); text-align: center; padding: 32px 0; font-size: 13px; }
+.lc-error { color: var(--lc-danger); padding: 12px 0; font-size: 13px; }
+
+/* 评论项：卡片式 */
+.lc-comment {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: var(--lc-radius);
+  background: var(--lc-surface);
+  border: 1px solid var(--lc-border);
+  box-shadow: 0 1px 2px rgba(36,38,43,.04), 0 2px 8px rgba(36,38,43,.06);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+/* 待审核评论（提交后前端假性通过）：背景加深标识，审核通过后刷新即恢复正常样式 */
+.lc-comment.lc-pending {
+  background: var(--lc-pending-bg);
+  border-color: var(--lc-pending-border);
+}
+.lc-avatar { flex: 0 0 auto; width: 44px; height: 44px; }
+.lc-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: block;
+}
+.lc-avatar-letter {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 500;
+  background: var(--lc-surface-strong);
+  border: 1px solid var(--lc-border);
+}
+.lc-body { flex: 1; min-width: 0; }
+
+.lc-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lc-nick { color: var(--lc-text); font-weight: 500; font-size: 14px; text-decoration: none; }
+a.lc-nick:hover { color: var(--lc-accent); }
+.lc-at { color: var(--lc-text-2); font-weight: 400; }
+.lc-pin {
+  background: var(--lc-accent); color: var(--lc-accent-text);
+  font-size: 11px; font-weight: 500;
+  padding: 2px 6px; border-radius: var(--lc-radius);
+  letter-spacing: .04em;
+}
+.lc-admin {
+  background: var(--lc-admin-bg); color: var(--lc-admin-text);
+  border: 1px solid var(--lc-admin-border);
+  font-size: 11px; font-weight: 500;
+  padding: 1px 6px; border-radius: var(--lc-radius);
+  letter-spacing: .04em;
+}
+.lc-time { color: var(--lc-text-2); font-size: 12px; }
+
+.lc-content { margin: 10px 0; word-break: break-word; font-size: 14px; line-height: 1.7; }
+.lc-img {
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: var(--lc-radius);
+  margin: 8px 0;
+  display: block;
+}
+
+.lc-actions { display: flex; gap: 8px; margin-top: 8px; }
+.lc-actions button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.35em;
+  border: 1px solid var(--lc-border); background: var(--lc-surface);
+  color: var(--lc-text-2);
+  font-size: 12px; font-weight: 400;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: var(--lc-radius);
+  transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.lc-actions button:hover { color: var(--lc-accent); background: var(--lc-surface-strong); border-color: var(--lc-border-hover); }
+
+.lc-children { margin-top: 12px; padding-left: 16px; border-left: 1px solid var(--lc-border); }
+.lc-collapse-btn {
+  border: 1px solid var(--lc-border); background: var(--lc-surface); color: var(--lc-text-2);
+  font-size: 12px; border-radius: var(--lc-radius); padding: 4px 10px; margin-top: 6px; cursor: pointer;
+  transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.lc-collapse-btn:hover { color: var(--lc-accent); background: var(--lc-surface-strong); border-color: var(--lc-border-hover); }
+
+/* 加载更多 */
+.lc-more { text-align: center; padding: 8px 0; }
+
+/* 通用按钮 */
+.lc-btn {
+  border: 1px solid var(--lc-border); background: var(--lc-surface); color: var(--lc-text);
+  border-radius: var(--lc-radius); padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: 400;
+  transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.lc-btn:hover { background: var(--lc-surface-strong); color: var(--lc-accent); border-color: var(--lc-border-hover); }
+.lc-submit-btn { background: var(--lc-accent); color: var(--lc-accent-text); border-color: var(--lc-accent); }
+.lc-submit-btn:hover { background: var(--lc-text-2); color: var(--lc-accent-text); border-color: var(--lc-text-2); }
+.lc-submit-btn:disabled { opacity: .5; cursor: not-allowed; background: var(--lc-surface); color: var(--lc-text-2); border-color: var(--lc-border); }
+
+/* 表单 */
+.lc-form { margin-top: 16px; padding-top: 20px; padding-bottom: 20px; }
+.lc-form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.lc-input {
+  flex: 1; min-width: 160px; padding: 0.65rem 0.85rem; font-size: 13px;
+  border: 1px solid var(--lc-border); border-radius: var(--lc-radius); background: var(--lc-surface); color: var(--lc-text);
+  outline: none; font-family: inherit; font-weight: 400;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+.lc-input::placeholder, .lc-textarea::placeholder { color: var(--lc-text-2); }
+.lc-input:focus, .lc-textarea:focus { border-color: var(--lc-border-hover); background: var(--lc-surface-strong); }
+.lc-textarea {
+  width: 100%; padding: 0.65rem 0.85rem; font-size: 13px; resize: vertical;
+  border: 1px solid var(--lc-border); border-radius: var(--lc-radius); background: var(--lc-surface); color: var(--lc-text);
+  font-family: inherit; font-weight: 400; box-sizing: border-box; outline: none;
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.lc-form-foot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+.lc-toolbar { flex: 1; display: flex; gap: 8px; }
+.lc-char-count { color: var(--lc-text-2); font-size: 12px; }
+
+/* 回复栏 */
+.lc-reply-bar {
+  display: flex; align-items: center; gap: 10px; justify-content: space-between;
+  background: var(--lc-surface); border: 1px solid var(--lc-border); border-radius: var(--lc-radius); padding: 8px 10px; margin-bottom: 10px;
+}
+.lc-reply-info { color: var(--lc-accent); font-size: 13px; }
+
+/* 表情面板 */
+.lc-emoji-panel {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; padding: 8px;
+  border: 1px solid var(--lc-border); border-radius: var(--lc-radius); background: var(--lc-surface);
+}
+.lc-emoji { font-size: 20px; background: none; border: none; cursor: pointer; padding: 4px; border-radius: var(--lc-radius); }
+.lc-emoji:hover { background: var(--lc-hover); }
+
+/* Toast */
+.lc-toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+  padding: 9px 20px; border-radius: var(--lc-radius); font-size: 13px; z-index: 9999;
+  max-width: 80%; font-weight: 400;
+}
+.lc-toast-success { background: var(--lc-accent); color: var(--lc-accent-text); }
+.lc-toast-error { background: var(--lc-danger); color: var(--lc-accent-text); }
+.lc-toast-info { background: var(--lc-accent); color: var(--lc-accent-text); }
+
+@media (max-width: 480px) {
+  .lc-comment { padding: 14px; gap: 12px; margin-bottom: 10px; }
+  .lc-avatar { width: 40px; height: 40px; }
+  .lc-avatar-img, .lc-avatar-letter { width: 40px; height: 40px; }
+  .lc-avatar-letter { font-size: 16px; }
+  .lc-content { font-size: 14px; }
+  .lc-actions button { font-size: 12px; padding: 4px 8px; }
+  .lc-form-foot { flex-wrap: wrap; }
+  .lc-toolbar { flex: none; }
+}

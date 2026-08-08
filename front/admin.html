@@ -1,0 +1,2014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dwxComment 管理后台</title>
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="/admin/fontawesome/css/all.min.css">
+<style>
+  /* 局部借鉴 DeepWhiteX：低饱和紫灰、几何小圆角、玻璃态、轻量字体 */
+  :root {
+    --bg: #efeeeb;
+    --surface: rgba(255, 255, 255, 0.65);
+    --surface-strong: rgba(255, 255, 255, 0.85);
+    --text: #24262b;
+    --muted: rgba(36, 38, 43, 0.62);
+    --border: rgba(36, 38, 43, 0.1);
+    --border-hover: rgba(36, 38, 43, 0.22);
+    --ice: #70687a;
+    --silver: #24262b;
+    --violet: #6e627a;
+    --ice-dim: rgba(112, 104, 122, 0.72);
+    --silver-dim: rgba(36, 38, 43, 0.62);
+    --ring: rgba(112, 104, 122, 0.22);
+
+    --ok-bg: rgba(22, 163, 74, 0.12);
+    --ok-text: #166534;
+    --ok-border: rgba(22, 163, 74, 0.4);
+    --ok-border-hover: rgba(22, 163, 74, 0.6);
+    --warn-bg: rgba(217, 119, 6, 0.12);
+    --warn-text: #92400e;
+    --warn-border: rgba(217, 119, 6, 0.4);
+    --warn-border-hover: rgba(217, 119, 6, 0.6);
+    --danger-bg: rgba(220, 38, 38, 0.12);
+    --danger-text: #991b1b;
+    --danger-border: rgba(220, 38, 38, 0.4);
+    --danger-border-hover: rgba(220, 38, 38, 0.6);
+
+    --accent: var(--violet);
+
+    --radius: 2px;
+    --shadow: 0 1px 2px rgba(36,38,43,.04), 0 2px 8px rgba(36,38,43,.06);
+    --font-display: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #030305;
+      --surface: rgba(255, 255, 255, 0.04);
+      --surface-strong: rgba(255, 255, 255, 0.07);
+      --text: rgb(255, 252, 225);
+      --muted: rgba(196, 184, 206, 0.65);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.18);
+      --ice: #c4b8ce;
+      --silver: rgb(255, 252, 225);
+      --violet: #b8a8c8;
+      --ice-dim: rgba(196, 184, 206, 0.65);
+      --silver-dim: rgba(232, 238, 245, 0.55);
+      --ring: rgba(196, 184, 206, 0.22);
+
+      --ok-bg: rgba(134, 239, 172, 0.12);
+      --ok-text: #86efac;
+      --ok-border: rgba(134, 239, 172, 0.35);
+      --ok-border-hover: rgba(134, 239, 172, 0.55);
+      --warn-bg: rgba(251, 191, 36, 0.12);
+      --warn-text: #fbbf24;
+      --warn-border: rgba(251, 191, 36, 0.35);
+      --warn-border-hover: rgba(251, 191, 36, 0.55);
+      --danger-bg: rgba(252, 165, 165, 0.12);
+      --danger-text: #fca5a5;
+      --danger-border: rgba(252, 165, 165, 0.35);
+      --danger-border-hover: rgba(252, 165, 165, 0.55);
+
+      --accent: var(--ice);
+      --shadow: 0 1px 2px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.3);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c4b8ce' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-weight: 300; font-size: 14px; line-height: 1.7; min-height: 100vh; }
+
+  /* 通用表单元素 */
+  input[type=text], input[type=password], input[type=email], select, textarea {
+    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit; font-weight: 400; outline: none; transition: border-color 0.3s ease, background 0.3s ease;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, select:focus, textarea:focus { border-color: var(--border-hover); background: var(--surface-strong); }
+  input[disabled], select[disabled], textarea[disabled] { opacity: 0.65; cursor: not-allowed; background: var(--surface); }
+  textarea { resize: vertical; min-height: 80px; font-family: inherit; font-size: 0.85rem; line-height: 1.6; }
+
+  /* 按钮 */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.45em; padding: 0.55rem 1rem; border: none; border-radius: var(--radius);
+    background: var(--surface); color: var(--text); font-size: 0.78rem; font-weight: 400; letter-spacing: 0.04em; line-height: 1; cursor: pointer; text-decoration: none; transition: color 0.3s ease, background 0.3s ease;
+  }
+  .btn:hover { background: var(--surface-strong); color: var(--ice); }
+  .btn[disabled], .btn[disabled]:hover { opacity: .5; cursor: not-allowed; background: var(--surface); color: var(--muted); }
+  .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.72rem; }
+
+  /* 图标统一对齐：inline-flex + 定高 1em，内部居中，外部与文字中线对齐 */
+  .fa-solid, .fa-regular, .fa-brands {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    line-height: 1;
+    font-size: 1em;
+    width: 1em;
+    height: 1em;
+  }
+  /* 按钮内图标：按钮用 flex + gap 控制间距，图标只需统一尺寸 */
+  .btn .fa-solid, .btn .fa-regular, .btn .fa-brands, .btn svg { font-size: 0.95em; }
+  .btn-icon-only { padding: 0.55rem; }
+  .btn-icon-only .fa-solid, .btn-icon-only .fa-regular,
+  .btn-icon-only .fa-brands, .btn-icon-only svg { margin-right: 0; }
+  /* 左右间距工具类 */
+  .icon-left { margin-right: 0.45em; }
+  .icon-right { margin-right: 0; margin-left: 0.45em; }
+  /* 标题、卡片标题、表单标签、标签页、提示文本中的图标 */
+  .login-card h1 .fa-solid, .login-card h1 .fa-regular,
+  .topbar h1 .fa-solid, .topbar h1 .fa-regular,
+  .field label .fa-solid, .field label .fa-regular,
+  .tab .fa-solid, .tab .fa-regular,
+  .oauth-tip .fa-solid, .oauth-tip .fa-regular,
+  .pwd-box summary .fa-solid, .pwd-box summary .fa-regular {
+    margin-right: 0.45em;
+    color: var(--ice);
+    font-size: 0.95em;
+  }
+  .card-title .fa-solid, .card-title .fa-regular {
+    color: var(--ice);
+    font-size: 0.95em;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    width: 1em;
+    height: 1em;
+    transform: translateY(-0.05em);
+  }
+  .login-brand {
+    display: flex;
+    justify-content: center;
+    line-height: 1;
+    color: var(--silver);
+    margin-bottom: 0.55rem;
+  }
+  .logo-dwx {
+    display: block;
+    width: 92px;
+    height: auto;
+  }
+  /* 登录标题图标：与文字基线对齐，避免突破底部 */
+  .login-intro h1 .fa-solid, .login-intro h1 .fa-regular {
+    display: inline-block;
+    vertical-align: baseline;
+    line-height: 1;
+    transform: translateY(-0.12em);
+  }
+
+  .btn-primary { background: var(--surface); color: var(--silver); }
+  .btn-primary:hover { background: var(--surface-strong); color: var(--ice); }
+  .btn-ok { background: var(--ok-bg); color: var(--ok-text); }
+  .btn-ok:hover { background: rgba(22, 163, 74, 0.22); color: var(--ok-text); }
+  .btn-warn { background: var(--warn-bg); color: var(--warn-text); }
+  .btn-warn:hover { background: rgba(217, 119, 6, 0.22); color: var(--warn-text); }
+  .btn-danger { background: var(--danger-bg); color: var(--danger-text); }
+  .btn-danger:hover { background: rgba(220, 38, 38, 0.22); color: var(--danger-text); }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem; font-weight: 400; letter-spacing: 0.04em; }
+  .pwd-wrap { position: relative; }
+  .pwd-wrap input { padding-right: 2.5rem; }
+  .pwd-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: none; padding: 6px 8px; cursor: pointer; color: var(--muted); font-size: 0.9rem; line-height: 1; }
+  .pwd-toggle:hover { color: var(--accent); }
+
+  /* 登录 */
+  #loginView { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .login-card { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 3rem; width: 100%; max-width: 760px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 3rem; }
+  .login-card::before { content: ''; position: absolute; top: 0; left: 0; width: 64px; height: 64px; background: rgba(249, 115, 22, 0.85); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 0; }
+  .login-intro { position: relative; flex: 1; min-width: 0; z-index: 1; }
+  .login-intro h1 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 400; margin-bottom: 0.4rem; letter-spacing: -0.02em; white-space: nowrap; text-align: center; }
+  .login-box { position: relative; flex: 1; min-width: 0; max-width: 340px; z-index: 1; }
+  .login-card .btn-primary { margin-top: 1rem; width: 100%; padding: 0.75rem 1rem; font-size: 0.85rem; }
+  .login-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; }
+  .login-tab { flex: 1; text-align: center; padding: 0.5rem 0; cursor: pointer; color: var(--muted); font-size: 0.85rem; border-bottom: 2px solid transparent; transition: color 0.3s ease, border-color 0.3s ease; }
+  .login-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .login-card .login-tip { color: var(--muted); font-size: 0.72rem; margin: 0.9rem 0 0; line-height: 1.6; }
+  .code-row { display: flex; gap: 8px; }
+  .code-row input { flex: 1; min-width: 0; }
+  .code-row .btn { flex: none; white-space: nowrap; }
+
+  /* 主界面 */
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 24px 80px; }
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; gap: 12px; padding: 16px 24px; margin: 0 -24px 24px; flex-wrap: wrap;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+  }
+  .topbar h1 { font-family: var(--font-display); font-size: 1.25rem; font-weight: 400; letter-spacing: -0.02em; }
+  .topbar .spacer { flex: 1; }
+  .site-sel { min-width: 180px; width: auto; max-width: 260px; padding: 0.55rem 2.25rem 0.55rem 1rem; font-size: 0.78rem; }
+
+  .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .user-menu { position: relative; display: inline-block; }
+  .user-menu-btn { min-width: 180px; max-width: 260px; justify-content: center; padding: 0.55rem 2.25rem 0.55rem 0.85rem; font-size: 0.78rem; line-height: 1.4; }
+  .user-menu-btn::after { content: ''; width: 0; height: 0; margin-left: 6px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 4px solid currentColor; }
+  .user-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 6px); min-width: 100%; z-index: 60; background: var(--surface); border: 1px solid var(--border-hover); border-radius: var(--radius); box-shadow: var(--shadow); padding: 4px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .user-menu:hover .user-dropdown, .user-dropdown.open { display: block; }
+  .user-dropdown::before { content: ''; position: absolute; top: -4px; left: 0; right: 0; height: 4px; }
+  .user-dropdown .btn { width: 100%; justify-content: flex-start; white-space: nowrap; font-size: 0.78rem; }
+  .tab { display: inline-flex; align-items: center; padding: 10px 4px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; font-size: 0.85rem; font-weight: 400; transition: color 0.3s ease; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--ice); border-bottom-color: var(--ice); }
+  .tab .badge { background: var(--ice); color: var(--bg); border-radius: var(--radius); padding: 2px 5px; font-size: 0.65rem; margin-left: 5px; font-weight: 500; min-width: 18px; text-align: center; display: inline-flex; align-items: center; justify-content: center; }
+
+  .filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: stretch; }
+  .filters input, .filters select { width: auto; }
+  .filters .btn { padding: 0.75rem 1rem; }
+  .filters .btn-sm.btn-icon-only { width: 2.4rem; height: 2.4rem; padding: 0; font-size: 1.05rem; }
+  .filters .kw { flex: 1; min-width: 200px; height: 2.4rem; }
+  .filters .cs-trigger { height: 2.4rem; }
+  select {
+    padding-right: 2.25rem;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2324262b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 12px;
+  }
+
+  /* 自定义下拉框 */
+  select.custom-select {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+  }
+  .cs-wrap {
+    position: relative;
+    display: inline-block;
+  }
+  .cs-trigger {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.6rem 2.25rem 0.6rem 0.9rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 0.85rem;
+    font-family: inherit;
+    font-weight: 400;
+    line-height: 1.4;
+    outline: none;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s ease;
+  }
+  .cs-trigger::after {
+    content: "\f078";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.7em;
+    color: var(--muted);
+    position: absolute;
+    right: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .cs-trigger:hover {
+    border-color: var(--border-hover);
+    background: var(--surface-strong);
+  }
+  .cs-trigger:hover::after { color: var(--ice); }
+  .cs-trigger:focus-visible, .cs-trigger.open {
+    border-color: var(--ice);
+    box-shadow: 0 0 0 3px var(--ring), 0 4px 12px rgba(36, 38, 43, 0.06);
+  }
+  .cs-trigger.open::after {
+    transform: translateY(-50%) rotate(180deg);
+    color: var(--ice);
+  }
+  .cs-trigger:active { transform: scale(0.992); }
+  .cs-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: var(--surface-strong);
+    border: 1px solid var(--border-hover);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent), 0 14px 38px color-mix(in srgb, var(--text) 14%, transparent);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    padding: 0.4rem;
+    max-height: 300px;
+    overflow-y: auto;
+    transform-origin: top center;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.96);
+    pointer-events: none;
+    transition: opacity 0.26s cubic-bezier(0.16, 1, 0.3, 1), transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.26s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.26s ease;
+  }
+  .cs-menu.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--text) 6%, transparent), 0 20px 48px color-mix(in srgb, var(--text) 18%, transparent);
+  }
+  .cs-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: background 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.12s ease, opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cs-menu.open .cs-item {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .cs-menu.open .cs-item:nth-child(1) { transition-delay: 0.02s; }
+  .cs-menu.open .cs-item:nth-child(2) { transition-delay: 0.04s; }
+  .cs-menu.open .cs-item:nth-child(3) { transition-delay: 0.06s; }
+  .cs-menu.open .cs-item:nth-child(4) { transition-delay: 0.08s; }
+  .cs-menu.open .cs-item:nth-child(5) { transition-delay: 0.10s; }
+  .cs-menu.open .cs-item:nth-child(6) { transition-delay: 0.12s; }
+  .cs-menu.open .cs-item:nth-child(7) { transition-delay: 0.14s; }
+  .cs-item:hover {
+    background: var(--surface-strong);
+    color: var(--text);
+    transform: translateX(2px);
+  }
+  .cs-item:active {
+    transform: translateX(2px) scale(0.985);
+    transition-duration: 0.08s;
+  }
+  .cs-item.selected {
+    background: rgba(196, 184, 206, 0.14);
+    color: var(--ice);
+    font-weight: 500;
+  }
+  .cs-item.selected:hover { background: rgba(196, 184, 206, 0.22); }
+  .cs-wrap.site-sel .cs-trigger {
+    min-width: 180px;
+    width: auto;
+    max-width: 260px;
+    padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+    font-size: 0.78rem;
+  }
+  .cs-wrap.site-sel {
+    flex: none;
+    width: 180px;
+    padding: 0;
+  }
+  .filters .cs-trigger { width: auto; }
+  .field .cs-trigger { width: 100%; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-title { font-family: var(--font-display); font-size: 1rem; font-weight: 400; margin-bottom: 1rem; display: flex; align-items: baseline; gap: 0.45em; }
+
+  .cmt-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cmt-nick { font-family: var(--font-display); font-size: 1rem; font-weight: 500; }
+  .cmt-tag { font-size: 0.6rem; padding: 1px 6px; border-radius: var(--radius); border: none; font-weight: 400; letter-spacing: 0.04em; }
+  .tag-pending { background: var(--warn-bg); color: var(--warn-text); }
+  .tag-passed { background: var(--ok-bg); color: var(--ok-text); }
+  .tag-spam { background: var(--danger-bg); color: var(--danger-text); }
+  .tag-pinned { background: var(--ice); color: var(--bg); }
+  .tag-reply { background: var(--surface-strong); color: var(--muted); }
+  .tag-admin { background: var(--warn-bg); color: var(--warn-text); }
+  .cmt-time { color: var(--muted); font-size: 0.75rem; margin-left: auto; }
+  .cmt-id { color: var(--muted); font-size: 0.75rem; }
+  .cmt-content { margin: 1rem 0; white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.85rem; font-weight: 400; }
+  .cmt-meta { color: var(--muted); font-size: 0.75rem; word-break: break-all; }
+  .cmt-actions { margin-top: 1rem; display: flex; gap: 8px; flex-wrap: wrap; }
+  .cmt-check { display: inline-flex; align-items: center; margin-right: 2px; flex: none; }
+  .cmt-check input[type=checkbox], .batch-selall input[type=checkbox] {
+    width: 15px; height: 15px; margin: 0; flex: none;
+    appearance: none; -webkit-appearance: none;
+    position: relative;
+    border: 1px solid var(--border-hover);
+    border-radius: var(--radius);
+    background: var(--surface);
+    cursor: pointer;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .cmt-check input[type=checkbox]:hover, .batch-selall input[type=checkbox]:hover { border-color: var(--ice); }
+  .cmt-check input[type=checkbox]:checked, .batch-selall input[type=checkbox]:checked { background: var(--ice); border-color: var(--ice); }
+  .cmt-check input[type=checkbox]:checked::after, .batch-selall input[type=checkbox]:checked::after {
+    content: '';
+    position: absolute; inset: 0; margin: auto;
+    width: 12px; height: 12px;
+    background-color: var(--bg);
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l2.5 2.5L12 5.5'/%3e%3c/svg%3e") center / 12px 12px no-repeat;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M4 8.5l2.5 2.5L12 5.5'/%3e%3c/svg%3e") center / 12px 12px no-repeat;
+  }
+  .batch-selall input[type=checkbox]:indeterminate { background: var(--ice); border-color: var(--ice); }
+  .batch-selall input[type=checkbox]:indeterminate::after {
+    content: '';
+    position: absolute; inset: 0; margin: auto;
+    width: 12px; height: 12px;
+    background-color: var(--bg);
+    -webkit-mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' d='M3.5 8h9'/%3e%3c/svg%3e") center / 12px 12px no-repeat;
+    mask: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' d='M3.5 8h9'/%3e%3c/svg%3e") center / 12px 12px no-repeat;
+  }
+  .cmt-check input[type=checkbox]:focus-visible, .batch-selall input[type=checkbox]:focus-visible { outline: 2px solid var(--ice); outline-offset: 1px; }
+  .card.selected { border-color: var(--ice); }
+  .batch-bar {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 80;
+    display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+    width: max-content; max-width: calc(100vw - 32px); padding: 14px 20px;
+    background: var(--surface); border: 1px solid var(--border-hover); border-radius: var(--radius);
+    box-shadow: 0 2px 8px rgba(0,0,0,.08); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    font-size: 0.8rem; animation: batch-in .2s ease;
+  }
+  @keyframes batch-in {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+  }
+  .batch-bar .batch-info { color: var(--muted); }
+  .batch-bar .batch-info b { color: var(--ice); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .batch-selall { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--text); font-weight: 400; }
+  .cmt-reply-box { margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  .cmt-reply-box textarea { min-height: 72px; font-size: 0.85rem; }
+  .cmt-reply-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+  .cmt-reply-box .cmt-reply-target { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+
+  .pager { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 24px; color: var(--muted); font-size: 0.75rem; }
+  .pager .btn { height: 2.2rem; padding: 0 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .pager .btn:hover { background: var(--surface-strong); border-color: var(--border-hover); }
+  .pager .btn[disabled], .pager .btn[disabled]:hover { background: var(--surface); border-color: var(--border); }
+  .pager span { min-width: 6em; text-align: center; font-variant-numeric: tabular-nums; }
+  .list-bottom { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 24px; }
+  .list-bottom .pager { margin-top: 0; }
+  .list-bottom .cs-trigger { width: auto; height: 2.2rem; padding: 0 2.25rem 0 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  .list-bottom .cs-trigger:hover { background: var(--surface-strong); border-color: var(--border-hover); }
+  .empty { text-align: center; color: var(--muted); padding: 48px 0; font-size: 0.85rem; }
+
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); padding: 9px 20px; border-radius: var(--radius); color: var(--bg); font-size: 0.8rem; z-index: 99; opacity: 0; transition: opacity .25s; max-width: 80vw; font-weight: 400; }
+  .toast.show { opacity: 1; }
+  .toast-ok { background: var(--ok-text); }
+  .toast-err { background: var(--danger-text); }
+  .toast-info { background: var(--accent); }
+
+  /* 自定义确认弹窗 */
+:root { --confirm-bg: #ffffff; --confirm-mask: rgba(0, 0, 0, 0.18); }
+  @media (prefers-color-scheme: dark) { :root { --confirm-bg: #1b1b20; --confirm-mask: rgba(0, 0, 0, 0.35); } }
+  .modal-mask { position: fixed; inset: 0; background: var(--confirm-mask); z-index: 200; display: flex; align-items: center; justify-content: center; }
+  .confirm-box { background: var(--confirm-bg); border: 1px solid var(--border-hover); border-radius: var(--radius); box-shadow: 0 8px 32px rgba(0,0,0,0.12); width: min(360px, calc(100vw - 32px)); padding: 1.25rem 1.35rem; }
+  .confirm-head { display: flex; align-items: center; gap: 0.5rem; font-size: 0.96rem; font-weight: 600; margin-bottom: 0.45rem; color: var(--text); }
+  .confirm-head i { color: var(--danger-text); }
+  .confirm-box.confirm-normal .confirm-head i { color: var(--ice); }
+  .confirm-msg { margin: 0 0 1.1rem; font-size: 0.84rem; font-weight: 400; color: var(--silver-dim); line-height: 1.7; word-break: break-word; }
+  .confirm-actions { display: flex; justify-content: flex-end; gap: 0.55rem; }
+
+  .back-to-top {
+    position: fixed; right: 24px; bottom: 24px; z-index: 90;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-strong); color: var(--ice);
+    border: 1px solid var(--border-hover); box-shadow: var(--shadow);
+    cursor: pointer; opacity: 0; visibility: hidden;
+    transform: translateY(12px); transition: opacity .3s ease, transform .3s ease, visibility .3s ease;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .back-to-top:hover { background: var(--surface); color: var(--silver); }
+  .back-to-top.show { opacity: 1; visibility: visible; transform: translateY(0); }
+  .back-to-top svg { width: 20px; height: 20px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .pf-val { color: var(--text); font-weight: 400; }
+  .oauth-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .oauth-row:last-of-type { border-bottom: none; }
+  .oauth-info { flex: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .oauth-provider { font-family: var(--font-display); font-weight: 500; flex: none; }
+  .oauth-desc { color: var(--muted); font-size: 0.8rem; word-break: break-all; }
+  .oauth-tip { color: var(--muted); font-size: 0.75rem; margin-top: 8px; line-height: 1.6; }
+  .switch-row { display: flex; align-items: center; gap: 8px; }
+  .switch-row input { width: auto; }
+  details.pwd-box { margin-top: 24px; }
+  details.pwd-box summary { cursor: pointer; color: var(--muted); font-size: 0.8rem; }
+  details.pwd-box summary:hover { color: var(--text); }
+
+  /* 自定义滚动条 */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--silver-dim); }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .login-card { flex-direction: column; align-items: stretch; gap: 1.5rem; padding: 2rem; }
+    .login-box { max-width: none; }
+    .topbar h1 { width: 100%; }
+    .topbar .spacer { display: none; }
+    .site-sel, .cs-wrap.site-sel { flex: 1; min-width: auto; max-width: none; }
+    .cs-wrap.site-sel .cs-trigger { width: 100%; }
+    .user-menu { flex: 1; }
+    .user-menu-btn { width: 100%; min-width: auto; }
+    .user-dropdown { width: 100%; }
+    .filters .kw { width: 100%; flex: none; }
+    .cmt-head { gap: 6px; }
+    .cmt-time { margin-left: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 登录视图 ===== -->
+<div id="loginView" style="display:none">
+  <div class="login-card">
+    <div class="login-intro">
+      <div class="login-brand">
+        <svg class="logo-dwx" viewBox="0 0 100 30" fill="none" aria-hidden="true">
+          <path d="M22 3 L22 26 M22 8 C13 8 6 12 6 16 C6 20 13 24 22 24" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
+          <path d="M32 8 L38 26 L43 13 L48 26 L54 8" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
+          <path d="M64 8 L90 26 M68 26 L86 8" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
+        </svg>
+      </div>
+      <h1>Comment 管理后台</h1>
+    </div>
+    <div class="login-box">
+    <div class="login-tabs">
+      <div class="login-tab active" id="loginTabPwd" onclick="switchLoginTab('pwd')">账号密码</div>
+      <div class="login-tab" id="loginTabEmail" onclick="switchLoginTab('email')">邮箱验证码</div>
+      <div class="login-tab" id="loginTabReg" onclick="switchLoginTab('reg')">注册账号</div>
+    </div>
+    <div id="loginPwdForm">
+      <div class="field"><label><i class="fa-regular fa-user icon-left"></i>用户名</label><input type="text" id="loginUser" placeholder="admin"></div>
+      <div class="field"><label><i class="fa-solid fa-lock icon-left"></i>密码</label><div class="pwd-wrap"><input type="password" id="loginPass" placeholder="密码" onkeydown="if(event.key==='Enter')doLogin()"><button type="button" class="pwd-toggle" onclick="togglePwd('loginPass', this)" title="显示/隐藏密码" tabindex="-1"><i class="fa-solid fa-eye-slash"></i></button></div></div>
+      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()"><i class="fa-solid fa-arrow-right-to-bracket"></i>登 录</button>
+    </div>
+    <div id="login2faForm" style="display:none">
+      <p class="login-tip" id="login2faHint" style="margin:0.2rem 0 0.9rem"></p>
+      <div class="field"><label><i class="fa-solid fa-shield-halved icon-left"></i>验证码</label>
+        <div class="code-row">
+          <input type="text" id="login2faCode" placeholder="6 位验证码" onkeydown="if(event.key==='Enter')doLogin2FA()">
+          <button class="btn btn-sm" id="login2faSendBtn" onclick="doLogin()">重新获取</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="login2faBtn" onclick="doLogin2FA()"><i class="fa-solid fa-arrow-right-to-bracket"></i>验 证 并 登 录</button>
+      <p class="login-tip"><i class="fa-solid fa-circle-info icon-left"></i><a href="javascript:void(0)" onclick="showLogin()">返回账号密码登录</a></p>
+    </div>
+    <div id="loginEmailForm" style="display:none">
+      <div class="field"><label><i class="fa-regular fa-envelope icon-left"></i>邮箱</label><input type="email" id="loginEmail" placeholder="admin@example.com"></div>
+      <div class="field"><label><i class="fa-solid fa-shield-halved icon-left"></i>验证码</label>
+        <div class="code-row">
+          <input type="text" id="loginEmailCode" placeholder="6 位验证码" onkeydown="if(event.key==='Enter')doEmailLogin()">
+          <button class="btn btn-sm" id="loginEmailSendBtn" onclick="sendEmailCode('login')">获取验证码</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="loginEmailBtn" onclick="doEmailLogin()"><i class="fa-solid fa-arrow-right-to-bracket"></i>登 录</button>
+    </div>
+    <div id="loginRegForm" style="display:none">
+      <div class="field"><label><i class="fa-regular fa-user icon-left"></i>用户名</label><input type="text" id="regUser" placeholder="admin" autocomplete="off"></div>
+      <div class="field"><label><i class="fa-solid fa-lock icon-left"></i>密码（≥8位，含字母和数字）</label><div class="pwd-wrap"><input type="password" id="regPass" placeholder="密码" onkeydown="if(event.key==='Enter')doRegister()"><button type="button" class="pwd-toggle" onclick="togglePwd('regPass', this)" title="显示/隐藏密码" tabindex="-1"><i class="fa-solid fa-eye-slash"></i></button></div></div>
+      <button class="btn btn-primary" id="regBtn" onclick="doRegister()"><i class="fa-solid fa-user-plus"></i>注 册</button>
+      <p class="login-tip"><i class="fa-solid fa-circle-info icon-left"></i>首次注册成为总管理员，后续注册需总管理审批通过。</p>
+    </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 主视图 ===== -->
+<div id="mainView" style="display:none">
+  <div class="wrap">
+    <div class="topbar">
+      <h1>dwxCM</h1>
+      <div class="spacer"></div>
+      <select class="site-sel custom-select" id="siteSel" onchange="switchSite()">
+        <option value="default">站点：default</option>
+      </select>
+      <div class="user-menu">
+        <button class="btn user-menu-btn" onclick="toggleUserMenu(event)">
+          <i class="fa-solid fa-circle-user icon-left"></i><span id="whoami"></span>
+        </button>
+        <div class="user-dropdown" id="userDropdown">
+          <button class="btn btn-sm" onclick="switchTab('profile')"><i class="fa-solid fa-user"></i>个人中心</button>
+          <button class="btn btn-sm" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i>系统设置</button>
+          <button class="btn btn-sm" onclick="doLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i>退出登录</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="pending" onclick="switchTab('pending')"><i class="fa-regular fa-clock icon-left"></i>待审核<span class="badge" id="pendingBadge" style="display:none">0</span></div>
+      <div class="tab" data-tab="passed" onclick="switchTab('passed')"><i class="fa-solid fa-check icon-left"></i>已通过</div>
+      <div class="tab" data-tab="spam" onclick="switchTab('spam')"><i class="fa-solid fa-triangle-exclamation icon-left"></i>垃圾评论</div>
+      <div class="tab" data-tab="replied" onclick="switchTab('replied')"><i class="fa-solid fa-reply icon-left"></i>回复评论</div>
+      <div class="tab" data-tab="all" onclick="switchTab('all')"><i class="fa-solid fa-list icon-left"></i>全部评论</div>
+      <div class="tab" data-tab="accounts" id="tabAccounts" onclick="switchTab('accounts')" style="display:none"><i class="fa-solid fa-users icon-left"></i>账号管理</div>
+    </div>
+
+    <!-- 批量操作栏（勾选评论后出现） -->
+    <div class="batch-bar" id="batchBar" style="display:none">
+      <label class="batch-selall"><input type="checkbox" id="batchSelAll"> 全选本页</label>
+      <span class="batch-info">已选 <b id="batchCount">0</b> 条</span>
+      <button class="btn btn-sm btn-ok" id="batchPassBtn" data-batch="pass"><i class="fa-solid fa-check"></i><span id="batchPassLabel">批量通过</span></button>
+      <button class="btn btn-sm btn-warn" id="batchSpamBtn" data-batch="spam"><i class="fa-solid fa-triangle-exclamation"></i>批量标记垃圾</button>
+      <button class="btn btn-sm btn-danger" id="batchDelBtn" style="display:none" data-batch="del"><i class="fa-regular fa-trash-can"></i>批量删除</button>
+      <button class="btn btn-sm" data-batch="clear"><i class="fa-solid fa-xmark"></i>清空选择</button>
+    </div>
+
+    <!-- 待审核 -->
+    <div id="tab-pending">
+      <div id="pendingList"></div>
+      <div class="pager" id="pendingPager"></div>
+    </div>
+
+    <!-- 已通过 -->
+    <div id="tab-passed" style="display:none">
+      <div id="passedList"></div>
+      <div class="pager" id="passedPager"></div>
+    </div>
+
+    <!-- 垃圾评论 -->
+    <div id="tab-spam" style="display:none">
+      <div id="spamList"></div>
+      <div class="pager" id="spamPager"></div>
+    </div>
+
+    <!-- 全部评论 -->
+    <div id="tab-all" style="display:none">
+      <div class="filters">
+        <input class="kw" type="text" id="fKeyword" placeholder="搜索昵称或内容" onkeydown="if(event.key==='Enter')searchAll()">
+        <button class="btn btn-sm btn-icon-only" onclick="searchAll()" title="搜索" aria-label="搜索"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+      <div id="allList"></div>
+      <div class="list-bottom">
+        <div class="pager" id="allPager"></div>
+        <select class="custom-select" id="fPageSize" onchange="searchAll()">
+          <option value="10" selected>每页10条</option>
+          <option value="20">每页20条</option>
+          <option value="50">每页50条</option>
+          <option value="100">每页100条</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 回复评论 -->
+    <div id="tab-replied" style="display:none">
+      <div class="filters">
+        <input class="kw" type="text" id="fRepliedKeyword" placeholder="搜索昵称或内容" onkeydown="if(event.key==='Enter')searchReplied()">
+        <button class="btn btn-sm btn-icon-only" onclick="searchReplied()" title="搜索" aria-label="搜索"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+      <div id="repliedList"></div>
+      <div class="list-bottom">
+        <div class="pager" id="repliedPager"></div>
+        <select class="custom-select" id="fRepliedPageSize" onchange="searchReplied()">
+          <option value="10" selected>每页10条</option>
+          <option value="20">每页20条</option>
+          <option value="50">每页50条</option>
+          <option value="100">每页100条</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 账号管理（仅站长可见） -->
+    <div id="tab-accounts" style="display:none">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-user-clock"></i>待审批账号</div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>新注册的账号须通过审批后方可登录。审批后默认仅具备「通过 / 回复 / 标记垃圾」权限，可在下方授予删除权限。</p>
+        <div id="pendingAccounts"></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-users"></i>全部管理员</div>
+        <div id="allAccounts"></div>
+      </div>
+    </div>
+
+    <!-- 个人中心 -->
+    <div id="tab-profile" style="display:none">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-id-card"></i>账号信息</div>
+        <div class="form-grid">
+          <div class="field"><label>管理员 ID</label><span id="pfId" class="pf-val">-</span></div>
+          <div class="field"><label>用户名</label><span id="pfName" class="pf-val">-</span></div>
+          <div class="field full"><label>注册时间</label><span id="pfCreated" class="pf-val">-</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-link"></i>第三方登录绑定</div>
+        <div class="oauth-row">
+          <div class="oauth-info">
+            <span class="oauth-provider">QQ</span>
+            <span class="oauth-desc" id="pfQQDesc">未绑定</span>
+          </div>
+          <button class="btn btn-sm btn-primary" id="pfQQBtn" onclick="pfAction('qq')">绑定</button>
+        </div>
+        <div class="oauth-row">
+          <div class="oauth-info">
+            <span class="oauth-provider">邮箱</span>
+            <span class="oauth-desc" id="pfEmailDesc">未绑定</span>
+          </div>
+          <button class="btn btn-sm btn-primary" id="pfEmailBtn" onclick="pfEmailAction()">绑定</button>
+        </div>
+        <div id="pfEmailForm" style="display:none; margin-top:12px">
+          <div class="field"><label>绑定邮箱</label><input type="email" id="pfEmailInput" placeholder="admin@example.com"></div>
+          <div class="field"><label>验证码</label>
+            <div class="code-row">
+              <input type="text" id="pfEmailCode" placeholder="6 位验证码" onkeydown="if(event.key==='Enter')doBindEmail()">
+              <button class="btn btn-sm" id="pfEmailSendBtn" onclick="sendEmailCode('bind')">获取验证码</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:4px" onclick="doBindEmail()"><i class="fa-solid fa-link"></i>确认绑定</button>
+        </div>
+        <div class="oauth-row">
+          <div class="oauth-info">
+            <span class="oauth-provider">GitHub</span>
+            <span class="oauth-desc" id="pfGHDesc">未绑定</span>
+          </div>
+          <button class="btn btn-sm btn-primary" id="pfGHBtn" onclick="pfAction('github')">绑定</button>
+        </div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>绑定后可直接使用第三方账号或邮箱验证码登录管理后台；解绑不影响密码登录。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-shield-halved"></i>两步验证</div>
+        <div class="oauth-row">
+          <div class="oauth-info">
+            <span class="oauth-provider">邮箱验证码 2FA</span>
+            <span class="oauth-desc" id="pf2faDesc">未开启</span>
+          </div>
+          <button class="btn btn-sm btn-primary" id="pf2faBtn" onclick="toggle2FA()">开启</button>
+        </div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>开启后，账号密码登录需额外输入发送到绑定邮箱的验证码；邮箱/第三方登录不受影响。需先绑定邮箱。</p>
+      </div>
+
+      <details class="pwd-box">
+        <summary><i class="fa-solid fa-key icon-left"></i>修改登录密码</summary>
+        <div class="card">
+          <div class="card-title"><i class="fa-solid fa-lock"></i>修改密码</div>
+          <div class="form-grid">
+            <div class="field"><label>旧密码</label><div class="pwd-wrap"><input type="password" id="oldPass"><button type="button" class="pwd-toggle" onclick="togglePwd('oldPass', this)" title="显示/隐藏密码" tabindex="-1"><i class="fa-solid fa-eye-slash"></i></button></div></div>
+            <div class="field"><label>新密码（≥8位，含字母和数字）</label><div class="pwd-wrap"><input type="password" id="newPass"><button type="button" class="pwd-toggle" onclick="togglePwd('newPass', this)" title="显示/隐藏密码" tabindex="-1"><i class="fa-solid fa-eye-slash"></i></button></div></div>
+          </div>
+          <button class="btn btn-primary" style="margin-top:12px" onclick="changePassword()"><i class="fa-solid fa-floppy-disk"></i>修改密码</button>
+        </div>
+      </details>
+    </div>
+
+    <!-- 系统设置 -->
+    <div id="tab-settings" style="display:none">
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-sliders"></i>系统设置</div>
+        <div class="form-grid">
+          <div class="field"><label>站点名称</label><input type="text" id="setSiteName"></div>
+          <div class="field"><label>通知邮箱</label><input type="email" id="setNoticeEmail" placeholder="admin@example.com"></div>
+          <div class="field"><label>站长昵称</label><input type="text" id="setAdminNick" placeholder="站长" maxlength="20"></div>
+          <div class="field"><label>站长徽章文案</label><input type="text" id="setAdminBadge" placeholder="站长" maxlength="10"></div>
+          <div class="field"><label>站长头像 URL</label><input type="text" id="setAdminAvatar" placeholder="https://example.com/avatar.png"></div>
+          <div class="field switch-row"><label style="margin:0"><input type="checkbox" id="setNotifyNew"> 新评论通知管理员</label></div>
+          <div class="field switch-row"><label style="margin:0"><input type="checkbox" id="setNotifyReply"> 回复邮件通知</label></div>
+          <div class="field full"><label>审核模式（固定为全量人工审核，不可修改）</label><input type="text" id="setAuditMode" disabled></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i>保存设置</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-file-export"></i>导出评论</div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>导出当前站点「<span id="dataSiteName">-</span>」的全部评论为 JSON 文件，可用于迁移或留档。</p>
+        <button class="btn btn-primary" style="margin-top:8px" onclick="doExport()"><i class="fa-solid fa-download"></i>导出 JSON</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-file-import"></i>导入评论</div>
+        <div class="form-grid">
+          <div class="field"><label>数据源格式</label>
+            <select class="custom-select" id="importSource">
+              <option value="lightcomment" selected>dwxComment（本系统导出）</option>
+              <option value="waline">waline</option>
+              <option value="twikoo">twikoo</option>
+              <option value="disqus">disqus</option>
+            </select>
+          </div>
+          <div class="field"><label>JSON 文件（≤5MB）</label><input type="file" id="importFile" accept=".json,application/json"></div>
+        </div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>本系统导出文件（含 pageId 字段）会自动识别，无需选择格式；已存在的评论（同页面同内容）会跳过。导入的评论直接以已审核状态入库。</p>
+        <button class="btn btn-primary" style="margin-top:8px" id="importBtn" onclick="doImport()"><i class="fa-solid fa-upload"></i>导入</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><i class="fa-solid fa-database"></i>一键备份</div>
+        <p class="oauth-tip"><i class="fa-solid fa-circle-info icon-left"></i>生成数据库文件级快照（先 WAL checkpoint 保证一致性）并下载，包含全部评论与配置。</p>
+        <button class="btn btn-primary" style="margin-top:8px" onclick="doBackup()"><i class="fa-solid fa-floppy-disk"></i>备份并下载</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-mask" id="confirmMask" style="display:none" role="dialog" aria-modal="true">
+  <div class="confirm-box" id="confirmBox">
+    <div class="confirm-head"><i class="fa-solid fa-triangle-exclamation"></i><span id="confirmTitle">提示</span></div>
+    <p class="confirm-msg" id="confirmMsg"></p>
+    <div class="confirm-actions">
+      <button class="btn" id="confirmCancel" type="button">取消</button>
+      <button class="btn btn-danger" id="confirmOk" type="button">确定</button>
+    </div>
+  </div>
+</div>
+
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+(function () {
+  'use strict';
+  var API = '';                    // 同源部署
+  var token = null;
+  var preAuthToken = null; // 2FA 预授权凭证（密码验证通过后签发，用于第二步换正式 token）
+  var state = { site: 'default', tab: 'pending', pendingPage: 1, allPage: 1, passedPage: 1, spamPage: 1, repliedPage: 1, pendingTotal: 0, adminBadge: '站长', canDelete: false, isOwner: false, profile: null, sel: {} };
+
+  /* ===== 通用 ===== */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function fmtTime(ts) {
+    if (!ts) return '';
+    var d = new Date(ts * 1000);
+    function pad(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+  var toastTimer = null;
+  function toast(msg, ok) {
+    var el = $('toast');
+    el.textContent = msg;
+    el.className = 'toast show ' + (ok ? 'toast-ok' : 'toast-err');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.className = 'toast'; }, 2600);
+  }
+  function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+  /* 自定义确认弹窗（替代原生 confirm） */
+  var confirmCb = null;
+  function showConfirm(opts) {
+    opts = opts || {};
+    $('confirmTitle').textContent = opts.title || '提示';
+    $('confirmMsg').textContent = opts.message || '';
+    $('confirmBox').className = 'confirm-box' + (opts.danger === false ? ' confirm-normal' : ' confirm-danger');
+    $('confirmOk').className = 'btn' + (opts.danger === false ? '' : ' btn-danger');
+    $('confirmOk').textContent = opts.okText || '确定';
+    confirmCb = opts.onOk || null;
+    $('confirmMask').style.display = 'flex';
+    $('confirmCancel').focus();
+  }
+  function closeConfirm() { $('confirmMask').style.display = 'none'; confirmCb = null; }
+  $('confirmCancel').addEventListener('click', closeConfirm);
+  $('confirmOk').addEventListener('click', function () {
+    var cb = confirmCb;
+    closeConfirm();
+    if (cb) cb();
+  });
+  $('confirmMask').addEventListener('click', function (e) {
+    if (e.target === this) closeConfirm();
+  });
+  document.addEventListener('keydown', function (e) {
+    if ($('confirmMask').style.display === 'none') return;
+    if (e.key === 'Escape') closeConfirm();
+    // Enter 不再强制触发"确定"：打开弹窗时焦点在"取消"按钮上，
+    // 按 Enter 走按钮自身的默认行为（即取消），避免焦点指示与操作相反造成误删。
+  });
+  function toggleBackToTop() {
+    var el = $('backToTop');
+    if (!el) return;
+    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+    el.classList.toggle('show', scrollTop > 300);
+  }
+  window.addEventListener('scroll', toggleBackToTop, { passive: true });
+  function api(method, path, body) {
+    var opts = { method: method, headers: {} };
+    if (token) opts.headers.Authorization = 'Bearer ' + token;
+    if (body !== undefined && body !== null) {
+      opts.headers['Content-Type'] = 'application/json; charset=utf-8';
+      opts.body = JSON.stringify(body);
+    }
+    return fetch(API + path, opts).then(function (resp) {
+      return resp.json().catch(function () { return { code: -1, msg: 'HTTP ' + resp.status }; });
+    }).then(function (res) {
+      if (res.code === 3003 || res.code === 3004) { // token 过期或失效，回到登录页
+        token = null; localStorage.removeItem('lc_token');
+        showLogin();
+        toast('登录已过期，请重新登录', false);
+        throw res;
+      }
+      return res;
+    });
+  }
+
+  /* ===== 自定义下拉框 ===== */
+  function initCustomSelects() {
+    var selects = document.querySelectorAll('select.custom-select');
+    for (var i = 0; i < selects.length; i++) {
+      let sel = selects[i];
+      if (sel._csInited) continue;
+      sel._csInited = true;
+
+      let wrap = document.createElement('div');
+      wrap.className = 'cs-wrap';
+      if (sel.className) {
+        var extra = sel.className.split(/\s+/).filter(function(c) {
+          return c && c !== 'custom-select' && c !== 'cs-native';
+        });
+        if (extra.length) wrap.className += ' ' + extra.join(' ');
+      }
+      sel.parentNode.insertBefore(wrap, sel);
+      wrap.appendChild(sel);
+      sel.classList.add('cs-native');
+
+      let trigger = document.createElement('div');
+      trigger.className = 'cs-trigger';
+      trigger.tabIndex = 0;
+      wrap.appendChild(trigger);
+
+      let menu = document.createElement('div');
+      menu.className = 'cs-menu';
+      wrap.appendChild(menu);
+
+      function build() {
+        menu.innerHTML = '';
+        var selectedText = '';
+        for (var j = 0; j < sel.options.length; j++) {
+          var opt = sel.options[j];
+          var item = document.createElement('div');
+          item.className = 'cs-item';
+          item.textContent = opt.text;
+          item.dataset.value = opt.value;
+          item.tabIndex = -1;
+          if (opt.selected) {
+            item.classList.add('selected');
+            selectedText = opt.text;
+          }
+          item.addEventListener('click', function(e) {
+            e.stopPropagation();
+            setVal(this.dataset.value);
+          });
+          menu.appendChild(item);
+        }
+        trigger.textContent = selectedText || (sel.options[0] ? sel.options[0].text : '');
+      }
+
+      function setVal(val) {
+        var old = sel.value;
+        sel.value = val;
+        if (old !== val) {
+          if (typeof sel.onchange === 'function') sel.onchange();
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        build();
+        close();
+      }
+
+      function open() {
+        menu.classList.add('open');
+        trigger.classList.add('open');
+      }
+      function close() {
+        menu.classList.remove('open');
+        trigger.classList.remove('open');
+      }
+      function toggle(e) {
+        if (e) e.stopPropagation();
+        var isOpen = menu.classList.contains('open');
+        var allMenus = document.querySelectorAll('.cs-menu.open');
+        for (var i = 0; i < allMenus.length; i++) allMenus[i].classList.remove('open');
+        var allTriggers = document.querySelectorAll('.cs-trigger.open');
+        for (var i = 0; i < allTriggers.length; i++) allTriggers[i].classList.remove('open');
+        if (!isOpen) {
+          menu.classList.add('open');
+          trigger.classList.add('open');
+        }
+      }
+
+      trigger.addEventListener('click', toggle);
+      trigger.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle(e);
+        } else if (e.key === 'Escape') {
+          close();
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          open();
+          var items = menu.querySelectorAll('.cs-item');
+          if (items.length) items[0].focus();
+        }
+      });
+
+      menu.addEventListener('click', function(e) { e.stopPropagation(); });
+      menu.addEventListener('keydown', function(e) {
+        var items = Array.prototype.slice.call(menu.querySelectorAll('.cs-item'));
+        var idx = items.indexOf(document.activeElement);
+        if (e.key === 'Escape') { close(); trigger.focus(); }
+        else if (e.key === 'Enter') { if (items[idx]) setVal(items[idx].dataset.value); }
+        else if (e.key === 'ArrowDown') { e.preventDefault(); if (idx < items.length - 1) items[idx + 1].focus(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); if (idx > 0) items[idx - 1].focus(); else { close(); trigger.focus(); } }
+      });
+
+      // 拦截 .value 赋值，同步更新自定义组件
+      let protoDesc = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+      if (protoDesc) {
+        Object.defineProperty(sel, 'value', {
+          get: function() { return protoDesc.get.call(sel); },
+          set: function(v) { protoDesc.set.call(sel, v); build(); },
+          configurable: true
+        });
+      }
+      sel.refreshCustomSelect = build;
+      build();
+    }
+
+    if (!window._csDocClick) {
+      window._csDocClick = true;
+      document.addEventListener('click', function() {
+        var menus = document.querySelectorAll('.cs-menu.open');
+        for (var i = 0; i < menus.length; i++) menus[i].classList.remove('open');
+        var triggers = document.querySelectorAll('.cs-trigger.open');
+        for (var i = 0; i < triggers.length; i++) triggers[i].classList.remove('open');
+      });
+    }
+  }
+
+  /* ===== 登录 ===== */
+  function showLogin() {
+    $('loginView').style.display = 'flex';
+    $('mainView').style.display = 'none';
+    // 重置登录表单：隐藏 2FA 步骤，回到账号密码 Tab
+    preAuthToken = null;
+    $('login2faForm').style.display = 'none';
+    $('loginPwdForm').style.display = 'block';
+    $('loginUser').focus();
+  }
+  function showMain() {
+    $('loginView').style.display = 'none';
+    $('mainView').style.display = 'block';
+    $('whoami').textContent = '管理员：' + formatWhoami(localStorage.getItem('lc_user') || '');
+    loadPerms();
+  }
+  // 加载当前账号权限（是否站长 / 是否有删除权限），并刷新界面元素
+  function loadPerms() {
+    api('GET', '/api/v1/admin/profile').then(function (res) {
+      if (res.code !== 0) return;
+      var d = res.data;
+      state.profile = d;
+      state.canDelete = !!d.canDelete;
+      state.isOwner = !!d.isOwner;
+      $('tabAccounts').style.display = state.isOwner ? '' : 'none';
+      // 权限就绪后重绘当前列表，删除按钮随权限显示/隐藏
+      if (state.tab === 'pending') loadPending(state.pendingPage);
+      else if (state.tab === 'passed') loadPassed(state.passedPage);
+      else if (state.tab === 'spam') loadSpam(state.spamPage);
+      else if (state.tab === 'all') loadAll(state.allPage);
+      else if (state.tab === 'replied') loadReplied(state.repliedPage);
+    });
+  }
+
+  function formatWhoami(raw) {
+    if (!raw) return '未登录';
+    try {
+      var obj = JSON.parse(raw);
+      if (obj && typeof obj === 'object') {
+        return obj.nick || obj.email || raw;
+      }
+    } catch (e) {}
+    return raw;
+  }
+  function doLogin() {
+    var u = $('loginUser').value.trim();
+    var p = $('loginPass').value;
+    if (!u || !p) { toast('请输入用户名和密码', false); return; }
+    var btn = $('loginBtn'); btn.disabled = true;
+    api('POST', '/api/v1/admin/login', { username: u, password: p }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '登录失败', false); return; }
+      if (res.data && res.data.need2FA) {
+        // 两步验证：验证码已自动发送到绑定邮箱，切换到验证码步骤
+        preAuthToken = res.data.preAuthToken;
+        $('login2faHint').textContent = '验证码已发送到 ' + (res.data.maskedEmail || '绑定邮箱') + '，10 分钟内有效';
+        $('loginPwdForm').style.display = 'none';
+        $('login2faForm').style.display = 'block';
+        $('login2faCode').value = '';
+        $('login2faCode').focus();
+        return;
+      }
+      onLoginSuccess(res.data.token, u);
+    }).finally(function () { btn.disabled = false; });
+  }
+  // 两步验证第二步：提交预授权凭证 + 验证码换取正式 token
+  function doLogin2FA() {
+    var code = $('login2faCode').value.trim();
+    if (!code) { toast('请输入验证码', false); return; }
+    var btn = $('login2faBtn'); btn.disabled = true;
+    api('POST', '/api/v1/admin/login/2fa', { preAuthToken: preAuthToken, code: code }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '验证失败', false); return; }
+      onLoginSuccess(res.data.token, $('loginUser').value.trim());
+    }).finally(function () { btn.disabled = false; });
+  }
+  function onLoginSuccess(tokenStr, user) {
+    token = tokenStr;
+    localStorage.setItem('lc_token', tokenStr);
+    localStorage.setItem('lc_user', user);
+    preAuthToken = null;
+    showMain();
+    initCustomSelects();
+    loadSites();
+    switchTab('pending');
+    toast('登录成功', true);
+  }
+  function doLogout() {
+    api('POST', '/api/v1/admin/logout', {}).catch(function () {});
+    localStorage.removeItem('lc_token');
+    localStorage.removeItem('lc_user');
+    token = null; preAuthToken = null; showLogin();
+  }
+
+  /* ===== 站点 ===== */
+  function switchSite() {
+    state.site = $('siteSel').value;
+    state.pendingPage = 1; state.allPage = 1; state.passedPage = 1; state.spamPage = 1; state.repliedPage = 1;
+    clearSel();
+    if (state.tab === 'pending') loadPending(1);
+    else if (state.tab === 'passed') loadPassed(1);
+    else if (state.tab === 'spam') loadSpam(1);
+    else if (state.tab === 'all') loadAll(1);
+    else if (state.tab === 'replied') loadReplied(1);
+    else if (state.tab === 'settings') loadSettings();
+    else if (state.tab === 'profile') loadProfile();
+    else if (state.tab === 'accounts') loadAccounts();
+  }
+  // 动态加载站点列表，重建下拉选项并同步自定义下拉框
+  function loadSites() {
+    api('GET', '/api/v1/admin/sites').then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载站点列表失败', false); return; }
+      var sites = res.data.sites || [];
+      var sel = $('siteSel');
+      sel.innerHTML = '';
+      for (var i = 0; i < sites.length; i++) {
+        var opt = document.createElement('option');
+        opt.value = sites[i];
+        opt.text = '站点：' + sites[i];
+        if (sites[i] === state.site) opt.selected = true;
+        sel.appendChild(opt);
+      }
+      if (sel.refreshCustomSelect) sel.refreshCustomSelect();
+    });
+  }
+
+  /* ===== Tabs ===== */
+  function switchTab(tab) {
+    state.tab = tab;
+    clearSel();
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) tabs[i].className = 'tab' + (tabs[i].getAttribute('data-tab') === tab ? ' active' : '');
+    $('tab-pending').style.display = tab === 'pending' ? 'block' : 'none';
+    $('tab-passed').style.display = tab === 'passed' ? 'block' : 'none';
+    $('tab-spam').style.display = tab === 'spam' ? 'block' : 'none';
+    $('tab-all').style.display = tab === 'all' ? 'block' : 'none';
+    $('tab-replied').style.display = tab === 'replied' ? 'block' : 'none';
+    $('tab-profile').style.display = tab === 'profile' ? 'block' : 'none';
+    $('tab-settings').style.display = tab === 'settings' ? 'block' : 'none';
+    $('tab-accounts').style.display = tab === 'accounts' ? 'block' : 'none';
+    if (tab === 'pending') loadPending(1);
+    else if (tab === 'passed') loadPassed(1);
+    else if (tab === 'spam') loadSpam(1);
+    else if (tab === 'all') loadAll(1);
+    else if (tab === 'replied') loadReplied(1);
+    else if (tab === 'settings') loadSettings();
+    else if (tab === 'profile') loadProfile();
+    else if (tab === 'accounts') loadAccounts();
+  }
+
+  /* ===== 用户菜单 ===== */
+  function toggleUserMenu(e) {
+    if (e && e.stopPropagation) e.stopPropagation();
+    var d = $('userDropdown');
+    if (d) d.classList.toggle('open');
+  }
+  document.addEventListener('click', function () {
+    var d = $('userDropdown');
+    if (d) d.classList.remove('open');
+  });
+
+  /* ===== 评论渲染 ===== */
+  function statusTag(c) {
+    if (c.isPinned) return ' <span class="cmt-tag tag-pinned">置顶</span>';
+    if (c.isAudited === 0) return ' <span class="cmt-tag tag-pending">待审</span>';
+    if (c.isAudited === -1) return ' <span class="cmt-tag tag-spam">垃圾</span>';
+    return ' <span class="cmt-tag tag-passed">已通过</span>';
+  }
+  function renderItem(c, isPending) {
+    var isReply = c.parentId > 0;
+    var meta = [];
+    if (c.email) meta.push('邮箱：' + esc(c.email));
+    if (c.ip) meta.push('IP：' + esc(c.ip));
+    if (c.userAgent) meta.push('UA：' + esc(c.userAgent));
+    if (isReply) meta.push('回复 #' + c.parentId);
+    var actions = '';
+    if (!isPending) {
+      if (c.isAudited !== 1) actions += '<button class="btn btn-sm btn-ok" data-a="pass" data-id="' + c.id + '"><i class="fa-solid fa-check"></i>' + (c.isAudited === -1 ? '改成通过状态' : '通过') + '</button>';
+      if (state.tab !== 'replied' && c.isAudited !== -1) actions += '<button class="btn btn-sm btn-warn" data-a="spam" data-id="' + c.id + '"><i class="fa-solid fa-triangle-exclamation"></i>标记垃圾</button>';
+      if (!isReply && c.isAudited === 1) {
+        if (c.isPinned) actions += '<button class="btn btn-sm" data-a="unpin" data-id="' + c.id + '"><i class="fa-solid fa-thumbtack-slash"></i>取消置顶</button>';
+        else actions += '<button class="btn btn-sm" data-a="pin" data-id="' + c.id + '"><i class="fa-solid fa-thumbtack"></i>置顶</button>';
+      }
+    } else {
+      // 待审核页只返回 is_audited = 0，固定显示通过 + 标记垃圾
+      actions += '<button class="btn btn-sm btn-ok" data-a="pass" data-id="' + c.id + '"><i class="fa-solid fa-check"></i>通过</button>';
+      actions += '<button class="btn btn-sm btn-warn" data-a="spam" data-id="' + c.id + '"><i class="fa-solid fa-triangle-exclamation"></i>标记垃圾</button>';
+    }
+    if (c.isAudited === 1) actions += '<button class="btn btn-sm" data-a="reply" data-id="' + c.id + '" data-nick="' + esc(c.nick) + '"><i class="fa-solid fa-reply"></i>回复</button>';
+    if (state.canDelete) actions += '<button class="btn btn-sm btn-danger" data-a="del" data-id="' + c.id + '"><i class="fa-regular fa-trash-can"></i>删除</button>';
+    return '<div class="card' + (state.sel[c.id] ? ' selected' : '') + '">' +
+      '<div class="cmt-head"><label class="cmt-check"><input type="checkbox" class="cmt-sel" data-id="' + c.id + '"' + (state.sel[c.id] ? ' checked' : '') + '></label>' +
+        '<span class="cmt-nick">' + esc(c.nick) + '</span>' + statusTag(c) +
+        (c.isAdmin ? '<span class="cmt-tag tag-admin">' + esc(state.adminBadge || '站长') + '</span>' : '') +
+        (isReply ? '<span class="cmt-tag tag-reply">回复</span>' : '') +
+        '<span class="cmt-time">' + fmtTime(c.createTime) + '</span>' +
+        '<span class="cmt-id">#' + c.id + '</span></div>' +
+      '<div class="cmt-content">' + esc(c.content) + '</div>' +
+      '<div class="cmt-meta">' + meta.join(' · ') + '</div>' +
+      '<div class="cmt-actions">' + actions + '</div>' +
+    '</div>';
+  }
+  function pagerHtml(cur, totalPages, fn) {
+    if (totalPages <= 1) return '';
+    var h = '<button class="btn btn-sm" data-pg="' + (cur - 1) + '" ' + (cur <= 1 ? 'disabled' : '') + '><i class="fa-solid fa-chevron-left"></i>上一页</button>' +
+      '<span>第 ' + cur + ' / ' + totalPages + ' 页</span>' +
+      '<button class="btn btn-sm" data-pg="' + (cur + 1) + '" ' + (cur >= totalPages ? 'disabled' : '') + '>下一页<i class="fa-solid fa-chevron-right icon-right"></i></button>';
+    return h;
+  }
+
+  /* ===== 批量选择与操作 ===== */
+  var LIST_CONTAINER = { pending: 'pendingList', passed: 'passedList', spam: 'spamList', all: 'allList', replied: 'repliedList' };
+  function listSelInputs() {
+    var id = LIST_CONTAINER[state.tab];
+    return id ? document.querySelectorAll('#' + id + ' .cmt-sel') : [];
+  }
+  function selCount() { return Object.keys(state.sel).length; }
+  function clearSel() {
+    state.sel = {};
+    var cbs = document.querySelectorAll('.cmt-sel');
+    for (var i = 0; i < cbs.length; i++) {
+      cbs[i].checked = false;
+      var card = cbs[i].closest('.card');
+      if (card) card.classList.remove('selected');
+    }
+    updateBatchBar();
+  }
+  function updateBatchBar() {
+    var n = selCount();
+    var bar = $('batchBar');
+    if (bar) bar.style.display = n > 0 ? 'flex' : 'none';
+    $('batchCount').textContent = n;
+    var delBtn = $('batchDelBtn');
+    if (delBtn) delBtn.style.display = state.canDelete ? '' : 'none';
+    // 批量操作按列表上下文显示：通过仅对未通过列表有意义，垃圾页本身已是垃圾不再显示标记
+    var passBtn = $('batchPassBtn');
+    if (passBtn) passBtn.style.display = (state.tab === 'pending' || state.tab === 'spam' || state.tab === 'all') ? '' : 'none';
+    var passLabel = $('batchPassLabel');
+    if (passLabel) passLabel.textContent = state.tab === 'spam' ? '批量改成通过状态' : '批量通过';
+    var spamBtn = $('batchSpamBtn');
+    if (spamBtn) spamBtn.style.display = (state.tab === 'pending' || state.tab === 'passed' || state.tab === 'all') ? '' : 'none';
+    var selAll = $('batchSelAll');
+    if (selAll) {
+      var cbs = listSelInputs();
+      var checked = 0;
+      for (var i = 0; i < cbs.length; i++) if (cbs[i].checked) checked++;
+      selAll.checked = cbs.length > 0 && checked === cbs.length;
+      selAll.indeterminate = checked > 0 && checked < cbs.length;
+    }
+  }
+  function selectAllOnPage(on) {
+    var cbs = listSelInputs();
+    for (var i = 0; i < cbs.length; i++) {
+      var cb = cbs[i];
+      cb.checked = on;
+      var id = cb.getAttribute('data-id');
+      if (on) state.sel[id] = true; else delete state.sel[id];
+      var card = cb.closest('.card');
+      if (card) card.classList.toggle('selected', on);
+    }
+    updateBatchBar();
+  }
+  function reloadCurrentList() {
+    if (state.tab === 'pending') loadPending(state.pendingPage);
+    else if (state.tab === 'passed') loadPassed(state.passedPage);
+    else if (state.tab === 'spam') loadSpam(state.spamPage);
+    else if (state.tab === 'replied') loadReplied(state.repliedPage);
+    else loadAll(state.allPage);
+  }
+  // 搜索/每页条数变化会重载列表（视图变化），与分页、切 tab、切站点一致地清空已选，
+  // 避免「已选 N 条」指向已不在当前视图里的评论造成误操作。
+  function searchAll() { clearSel(); loadAll(1); }
+  function searchReplied() { clearSel(); loadReplied(1); }
+  function doBatch(action) {
+    if (action === 'clear') { clearSel(); return; }
+    var ids = Object.keys(state.sel).map(Number);
+    if (ids.length === 0) { toast('请先勾选要操作的评论', false); return; }
+    var n = ids.length;
+    var act = {
+      pass: { m: 'PUT', p: '/api/v1/admin/comments/batch-audit', b: { ids: ids, status: 1 }, cnt: 'affected', ok: function (c) { return '已通过 ' + c + ' 条'; }, confirm: null },
+      spam: { m: 'PUT', p: '/api/v1/admin/comments/batch-audit', b: { ids: ids, status: -1 }, cnt: 'affected', ok: function (c) { return '已标记 ' + c + ' 条为垃圾'; }, confirm: null },
+      del: { m: 'POST', p: '/api/v1/admin/comments/batch-delete', b: { ids: ids }, cnt: 'deleted', ok: function (c) { return '已删除 ' + c + ' 条'; }, confirm: '确定删除选中的 ' + n + ' 条评论吗？此操作不可恢复。' }
+    }[action];
+    if (!act) return;
+    if (act.confirm) {
+      showConfirm({ title: '批量删除', message: act.confirm, okText: '删除', danger: true, onOk: function () { doBatchExec(act); } });
+      return;
+    }
+    doBatchExec(act);
+  }
+  function doBatchExec(act) {
+    api(act.m, act.p, act.b).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '操作失败', false); return; }
+      // 以接口返回的实际处理数为准（后端会跳过不存在的 ID）
+      var c = res.data && typeof res.data[act.cnt] === 'number' ? res.data[act.cnt] : 0;
+      toast(act.ok(c), true);
+      clearSel();
+      reloadCurrentList();
+    }).catch(function () { toast('网络错误，请重试', false); });
+  }
+
+  /* ===== 待审核 ===== */
+  function loadPending(page) {
+    api('GET', '/api/v1/admin/comments/pending?page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site)).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      // 页码越界（如批量删除后总页数减少）时回退到最后一页
+      if (page > 1 && res.data.totalPages < page) { loadPending(res.data.totalPages); return; }
+      state.pendingPage = page;
+      var list = $('pendingList');
+      const pendingTotal = res.data.total;
+      $('pendingBadge').textContent = pendingTotal > 99 ? '99+' : pendingTotal;
+      $('pendingBadge').style.display = pendingTotal > 0 ? '' : 'none';
+      if (!res.data.list || res.data.list.length === 0) {
+        list.innerHTML = '<div class="empty">没有待审核的评论</div>';
+        $('pendingPager').innerHTML = '';
+        updateBatchBar();
+        return;
+      }
+      list.innerHTML = res.data.list.map(function (c) { return renderItem(c, true); }).join('');
+      $('pendingPager').innerHTML = pagerHtml(page, res.data.totalPages);
+      updateBatchBar();
+    });
+  }
+
+  /* ===== 已通过 ===== */
+  function loadPassed(page) {
+    api('GET', '/api/v1/admin/comments?page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=1').then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      if (page > 1 && res.data.totalPages < page) { loadPassed(res.data.totalPages); return; }
+      state.passedPage = page;
+      var list = $('passedList');
+      if (!res.data.list || res.data.list.length === 0) {
+        list.innerHTML = '<div class="empty">暂无已通过的评论</div>';
+        $('passedPager').innerHTML = '';
+        updateBatchBar();
+        return;
+      }
+      list.innerHTML = res.data.list.map(function (c) { return renderItem(c, false); }).join('');
+      $('passedPager').innerHTML = pagerHtml(page, res.data.totalPages);
+      updateBatchBar();
+    });
+  }
+
+  /* ===== 垃圾评论 ===== */
+  function loadSpam(page) {
+    api('GET', '/api/v1/admin/comments?page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=-1').then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      if (page > 1 && res.data.totalPages < page) { loadSpam(res.data.totalPages); return; }
+      state.spamPage = page;
+      var list = $('spamList');
+      if (!res.data.list || res.data.list.length === 0) {
+        list.innerHTML = '<div class="empty">暂无垃圾评论</div>';
+        $('spamPager').innerHTML = '';
+        updateBatchBar();
+        return;
+      }
+      list.innerHTML = res.data.list.map(function (c) { return renderItem(c, false); }).join('');
+      $('spamPager').innerHTML = pagerHtml(page, res.data.totalPages);
+      updateBatchBar();
+    });
+  }
+
+  /* ===== 全部评论 ===== */
+  function loadAll(page) {
+    var q = 'page=' + page + '&pageSize=' + ($('fPageSize').value || 10) + '&site=' + encodeURIComponent(state.site);
+    var kw = $('fKeyword').value.trim();
+    if (kw) q += '&keyword=' + encodeURIComponent(kw);
+    api('GET', '/api/v1/admin/comments?' + q).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      if (page > 1 && res.data.totalPages < page) { loadAll(res.data.totalPages); return; }
+      state.allPage = page;
+      var list = $('allList');
+      if (!res.data.list || res.data.list.length === 0) {
+        list.innerHTML = '<div class="empty">暂无评论</div>';
+        $('allPager').innerHTML = '';
+        updateBatchBar();
+        return;
+      }
+      list.innerHTML = res.data.list.map(function (c) { return renderItem(c, false); }).join('');
+      $('allPager').innerHTML = pagerHtml(page, res.data.totalPages);
+      updateBatchBar();
+    });
+  }
+
+  /* ===== 回复评论 ===== */
+  function loadReplied(page) {
+    var q = 'page=' + page + '&pageSize=' + ($('fRepliedPageSize').value || 10) + '&site=' + encodeURIComponent(state.site);
+    var kw = $('fRepliedKeyword').value.trim();
+    if (kw) q += '&keyword=' + encodeURIComponent(kw);
+    api('GET', '/api/v1/admin/comments/replied?' + q).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      if (page > 1 && res.data.totalPages < page) { loadReplied(res.data.totalPages); return; }
+      state.repliedPage = page;
+      var list = $('repliedList');
+      if (!res.data.list || res.data.list.length === 0) {
+        list.innerHTML = '<div class="empty">暂无后台回复</div>';
+        $('repliedPager').innerHTML = '';
+        updateBatchBar();
+        return;
+      }
+      list.innerHTML = res.data.list.map(function (c) { return renderItem(c, false); }).join('');
+      $('repliedPager').innerHTML = pagerHtml(page, res.data.totalPages);
+      updateBatchBar();
+    });
+  }
+
+  /* ===== 账号管理（仅站长） ===== */
+  function loadAccounts() {
+    api('GET', '/api/v1/admin/accounts').then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      var list = res.data.list || [];
+      var pending = list.filter(function (a) { return !a.isApproved; });
+      var approved = list.filter(function (a) { return a.isApproved; });
+      var ph = $('pendingAccounts');
+      if (pending.length === 0) {
+        ph.innerHTML = '<div class="empty">暂无待审批账号</div>';
+      } else {
+        ph.innerHTML = pending.map(function (a) {
+          return '<div class="oauth-row">' +
+            '<div class="oauth-info"><span class="oauth-provider">' + esc(a.username) + '</span>' +
+            '<span class="oauth-desc">注册于 ' + fmtTime(a.createTime) + '</span></div>' +
+            '<button class="btn btn-sm btn-primary" data-apr="' + a.id + '"><i class="fa-solid fa-check"></i>通过</button></div>';
+        }).join('');
+      }
+      var ah = $('allAccounts');
+      if (approved.length === 0) {
+        ah.innerHTML = '<div class="empty">暂无管理员</div>';
+      } else {
+        ah.innerHTML = approved.map(function (a) {
+          var badge = a.isOwner ? '<span class="cmt-tag tag-admin">站长</span>' : '';
+          var statusTag = a.isDisabled ? '<span class="cmt-tag tag-spam">已禁用</span>' : '';
+          var permDesc = a.isOwner ? '站长始终持有删除权限' : (a.canDelete ? '可删除评论' : '仅审核（通过/回复/标记垃圾）');
+          if (a.isDisabled) permDesc = '账号已被禁用，无法登录 · ' + permDesc;
+          var btn = a.isOwner ? '' :
+            '<button class="btn btn-sm ' + (a.canDelete ? 'btn-warn' : 'btn-primary') + '" data-del="' + a.id + '" data-val="' + (a.canDelete ? '0' : '1') + '"><i class="fa-solid fa-user-shield"></i>' +
+            (a.canDelete ? '收回删除权限' : '授予删除权限') + '</button>' +
+            '<button class="btn btn-sm ' + (a.isDisabled ? 'btn-ok' : 'btn-warn') + '" data-disabled="' + a.id + '" data-val="' + (a.isDisabled ? '0' : '1') + '"><i class="fa-solid ' + (a.isDisabled ? 'fa-user-check' : 'fa-user-slash') + '"></i>' +
+            (a.isDisabled ? '启用账号' : '禁用账号') + '</button>' +
+            '<button class="btn btn-sm btn-danger" data-delete="' + a.id + '"><i class="fa-solid fa-trash-can"></i>删除账号</button>';
+          return '<div class="oauth-row">' +
+            '<div class="oauth-info"><span class="oauth-provider">' + esc(a.username) + '</span>' + badge + statusTag +
+            '<span class="oauth-desc">' + permDesc + '</span></div>' + btn + '</div>';
+        }).join('');
+      }
+    });
+  }
+  function approveAccount(id) {
+    api('POST', '/api/v1/admin/accounts/' + id + '/approve', {}).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '操作失败', false); return; }
+      toast(res.msg || '已通过审批', true);
+      loadAccounts();
+    });
+  }
+  function setDeletePerm(id, val) {
+    api('PUT', '/api/v1/admin/accounts/' + id + '/delete-permission', { canDelete: val }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '操作失败', false); return; }
+      toast(res.msg || (val ? '已授予删除权限' : '已收回删除权限'), true);
+      loadAccounts();
+    });
+  }
+  function setAccountDisabled(id, val) {
+    api('PUT', '/api/v1/admin/accounts/' + id + '/disabled', { disabled: val }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '操作失败', false); return; }
+      toast(res.msg || (val ? '账号已禁用' : '账号已启用'), true);
+      loadAccounts();
+    });
+  }
+  function deleteAccount(id) {
+    api('DELETE', '/api/v1/admin/accounts/' + id, null).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '操作失败', false); return; }
+      toast(res.msg || '账号已删除', true);
+      loadAccounts();
+    });
+  }
+
+  /* ===== 操作（事件委托） ===== */
+  document.addEventListener('click', function (e) {
+    var batch = e.target.closest('button[data-batch]');
+    if (batch) { doBatch(batch.getAttribute('data-batch')); return; }
+    var apr = e.target.closest('button[data-apr]');
+    if (apr) { approveAccount(apr.getAttribute('data-apr')); return; }
+    var del = e.target.closest('button[data-del]');
+    if (del) {
+      if (!confirm(del.getAttribute('data-val') === '1' ? '确定授予该账号删除评论权限吗？' : '确定收回该账号的删除评论权限吗？')) return;
+      setDeletePerm(del.getAttribute('data-del'), del.getAttribute('data-val') === '1');
+      return;
+    }
+    var disabled = e.target.closest('button[data-disabled]');
+    if (disabled) {
+      if (!confirm(disabled.getAttribute('data-val') === '1' ? '确定禁用该账号吗？禁用后该账号将无法登录。' : '确定启用该账号吗？')) return;
+      setAccountDisabled(disabled.getAttribute('data-disabled'), disabled.getAttribute('data-val') === '1');
+      return;
+    }
+    var delAcc = e.target.closest('button[data-delete]');
+    if (delAcc) {
+      if (!confirm('确定删除该管理员账号吗？此操作不可恢复，账号关联的回复记录仍将保留。')) return;
+      deleteAccount(delAcc.getAttribute('data-delete'));
+      return;
+    }
+    var btn = e.target.closest('button[data-a]');
+    if (!btn || btn.disabled) return;
+    var a = btn.getAttribute('data-a');
+    var id = btn.getAttribute('data-id');
+    if (a === 'reply') {
+      toggleReplyBox(btn, id);
+      return;
+    }
+    var act = {
+      pass: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/audit', b: { status: 1 }, ok: '已通过' },
+      spam: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/audit', b: { status: -1 }, ok: '已标记为垃圾' },
+      del: { m: 'DELETE', p: '/api/v1/admin/comment/' + id, b: null, ok: '已删除' },
+      pin: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/pin', b: null, ok: '已置顶' },
+      unpin: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/unpin', b: null, ok: '已取消置顶' }
+    }[a];
+    if (!act) return;
+    if (a === 'del') {
+      showConfirm({ title: '删除评论', message: '确定删除这条评论吗？此操作不可恢复。', okText: '删除', danger: true, onOk: function () {
+        btn.disabled = true;
+        api(act.m, act.p, act.b).then(function (res) {
+          if (res.code !== 0) { btn.disabled = false; toast(res.msg || '操作失败', false); return; }
+          toast(act.ok, true);
+          reloadCurrentList();
+        }).catch(function () { btn.disabled = false; toast('网络错误，请重试', false); });
+      } });
+      return;
+    }
+    btn.disabled = true;
+    api(act.m, act.p, act.b).then(function (res) {
+      if (res.code !== 0) { btn.disabled = false; toast(res.msg || '操作失败', false); return; }
+      toast(act.ok, true);
+      reloadCurrentList();
+    }).catch(function () { btn.disabled = false; toast('网络错误，请重试', false); });
+  });
+
+  /* ===== 批量选择（复选框 change，事件委托） ===== */
+  document.addEventListener('change', function (e) {
+    var cb = e.target.closest ? e.target.closest('input.cmt-sel') : null;
+    if (cb) {
+      var cid = cb.getAttribute('data-id');
+      if (cb.checked) state.sel[cid] = true; else delete state.sel[cid];
+      var card = cb.closest('.card');
+      if (card) card.classList.toggle('selected', cb.checked);
+      updateBatchBar();
+      return;
+    }
+    if (e.target.id === 'batchSelAll') {
+      selectAllOnPage(e.target.checked);
+    }
+  });
+
+  /* ===== 站长回复：展开/收起回复框 ===== */
+  function toggleReplyBox(btn, id) {
+    var card = btn.closest('.card');
+    if (!card) return;
+    var box = card.querySelector('.cmt-reply-box');
+    if (box) {
+      box.remove();
+      return;
+    }
+    var nick = btn.getAttribute('data-nick') || '';
+    var boxEl = document.createElement('div');
+    boxEl.className = 'cmt-reply-box';
+    boxEl.innerHTML =
+      '<div class="cmt-reply-target">以站长身份回复 @' + esc(nick) + '（回复将直接展示在前台）</div>' +
+      '<textarea maxlength="1000" placeholder="回复内容（1~1000 字）"></textarea>' +
+      '<div class="cmt-reply-actions">' +
+        '<button class="btn btn-sm" data-r-cancel="' + id + '"><i class="fa-solid fa-xmark"></i>取消</button>' +
+        '<button class="btn btn-sm btn-ok" data-r-submit="' + id + '"><i class="fa-solid fa-reply"></i>回复</button>' +
+      '</div>';
+    card.appendChild(boxEl);
+    boxEl.querySelector('textarea').focus();
+  }
+
+  /* ===== 站长回复：提交 / 取消（事件委托） ===== */
+  document.addEventListener('click', function (e) {
+    var submitBtn = e.target.closest('button[data-r-submit]');
+    var cancelBtn = e.target.closest('button[data-r-cancel]');
+    if (cancelBtn) {
+      var card = cancelBtn.closest('.card');
+      if (card) {
+        var rb = card.querySelector('.cmt-reply-box');
+        if (rb) rb.remove();
+      }
+      return;
+    }
+    if (!submitBtn || submitBtn.disabled) return;
+    var id = submitBtn.getAttribute('data-r-submit');
+    var box = submitBtn.closest('.cmt-reply-box');
+    if (!box) return;
+    var content = box.querySelector('textarea').value.trim();
+    if (!content) { toast('请输入回复内容', false); return; }
+    submitBtn.disabled = true;
+    api('POST', '/api/v1/admin/comment/' + id + '/reply', { content: content }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '回复失败', false); submitBtn.disabled = false; return; }
+      toast('回复成功，已展示在前台', true);
+      if (state.tab === 'pending') loadPending(state.pendingPage);
+      else if (state.tab === 'passed') loadPassed(state.passedPage);
+      else if (state.tab === 'spam') loadSpam(state.spamPage);
+      else if (state.tab === 'replied') loadReplied(state.repliedPage);
+      else loadAll(state.allPage);
+    });
+  });
+
+  /* ===== 分页（事件委托） ===== */
+  document.addEventListener('click', function (e) {
+    var pg = e.target.closest('button[data-pg]');
+    if (!pg || pg.disabled) return;
+    clearSel();
+    var p = parseInt(pg.getAttribute('data-pg'), 10);
+    if (state.tab === 'pending') loadPending(p);
+    else if (state.tab === 'passed') loadPassed(p);
+    else if (state.tab === 'spam') loadSpam(p);
+    else if (state.tab === 'replied') loadReplied(p);
+    else loadAll(p);
+  });
+
+  /* ===== 系统设置 ===== */
+  function loadSettings() {
+    api('GET', '/api/v1/admin/settings?site=' + encodeURIComponent(state.site)).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载设置失败', false); return; }
+      var d = res.data;
+      state.adminBadge = d.adminBadge || '站长';
+      $('setSiteName').value = d.siteName || '';
+      $('setNoticeEmail').value = d.noticeEmail || '';
+      $('setAdminNick').value = d.adminNick || '';
+      $('setAdminBadge').value = d.adminBadge || '';
+      $('setAdminAvatar').value = d.adminAvatar || '';
+      $('setNotifyNew').checked = !!d.notifyNewComment;
+      $('setNotifyReply').checked = !!d.notifyReply;
+      $('setAuditMode').value = d.auditMode === 'all' ? '全量人工审核' : (d.auditMode || 'all');
+      $('dataSiteName').textContent = state.site;
+    });
+  }
+  function saveSettings() {
+    var body = {
+      siteName: $('setSiteName').value.trim(),
+      noticeEmail: $('setNoticeEmail').value.trim(),
+      adminNick: $('setAdminNick').value.trim(),
+      adminBadge: $('setAdminBadge').value.trim(),
+      adminAvatar: $('setAdminAvatar').value.trim(),
+      notifyNewComment: $('setNotifyNew').checked,
+      notifyReply: $('setNotifyReply').checked
+    };
+    api('PUT', '/api/v1/admin/settings?site=' + encodeURIComponent(state.site), body).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '保存失败', false); return; }
+      state.adminBadge = res.data.adminBadge || '站长';
+      toast('设置已保存', true);
+    });
+  }
+  function changePassword() {
+    var oldP = $('oldPass').value;
+    var newP = $('newPass').value;
+    if (!oldP || !newP) { toast('请填写新旧密码', false); return; }
+    api('PUT', '/api/v1/admin/password', { oldPassword: oldP, newPassword: newP }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '修改失败', false); return; }
+      toast('密码已修改，下次登录使用新密码', true);
+      $('oldPass').value = ''; $('newPass').value = '';
+    });
+  }
+
+  /* ===== 个人中心 ===== */
+  function loadProfile() {
+    api('GET', '/api/v1/admin/profile').then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
+      var d = res.data;
+      state.profile = d;
+      $('pfId').textContent = d.id;
+      $('pfName').textContent = d.username;
+      $('pfCreated').textContent = fmtTime(d.createTime) || '-';
+      setBindRow('qq', d.qqBound, d.qqName);
+      setBindRow('github', d.githubBound, d.githubName);
+      var ed = $('pfEmailDesc');
+      var eb = $('pfEmailBtn');
+      if (d.emailBound) {
+        ed.textContent = '已绑定：' + (d.email || '');
+        eb.textContent = '解绑';
+        eb.className = 'btn btn-sm btn-danger';
+        $('pfEmailForm').style.display = 'none';
+      } else {
+        ed.textContent = '未绑定';
+        eb.textContent = '绑定';
+        eb.className = 'btn btn-sm btn-primary';
+      }
+      // 两步验证状态
+      var t2 = $('pf2faDesc');
+      var t2b = $('pf2faBtn');
+      if (d.twofaEnabled) {
+        t2.textContent = '已开启';
+        t2b.textContent = '关闭';
+        t2b.className = 'btn btn-sm btn-danger';
+      } else {
+        t2.textContent = '未开启' + (d.emailBound ? '' : '（需先绑定邮箱）');
+        t2b.textContent = '开启';
+        t2b.className = 'btn btn-sm btn-primary';
+      }
+    });
+  }
+  function toggle2FA() {
+    var p = state.profile;
+    if (!p) return;
+    var enabling = !p.twofaEnabled;
+    if (enabling && !p.emailBound) { toast('请先绑定邮箱，再开启两步验证', false); return; }
+    api('POST', '/api/v1/admin/2fa/' + (enabling ? 'enable' : 'disable'), {}).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || (enabling ? '开启失败' : '关闭失败'), false); return; }
+      toast(res.msg, true);
+      loadProfile();
+    });
+  }
+  function setBindRow(provider, bound, name) {
+    var isQQ = provider === 'qq';
+    var desc = $('pf' + (isQQ ? 'QQ' : 'GH') + 'Desc');
+    var btn = $('pf' + (isQQ ? 'QQ' : 'GH') + 'Btn');
+    if (bound) {
+      desc.textContent = '已绑定：' + (name || (isQQ ? 'QQ 用户' : 'GitHub 用户'));
+      btn.textContent = '解绑';
+      btn.className = 'btn btn-sm btn-danger';
+    } else {
+      desc.textContent = '未绑定';
+      btn.textContent = '绑定';
+      btn.className = 'btn btn-sm btn-primary';
+    }
+  }
+  function pfAction(provider) {
+    var p = state.profile;
+    if (!p) return;
+    var isQQ = provider === 'qq';
+    var label = isQQ ? 'QQ' : 'GitHub';
+    var bound = isQQ ? p.qqBound : p.githubBound;
+    if (bound) {
+      if (!confirm('确定解绑 ' + label + ' 吗？解绑后该账号将无法通过 ' + label + ' 登录。')) return;
+      api('DELETE', '/api/v1/admin/oauth/' + provider).then(function (res) {
+        if (res.code !== 0) { toast(res.msg || '解绑失败', false); return; }
+        toast('已解绑 ' + label, true);
+        loadProfile();
+      });
+    } else {
+      api('POST', '/api/v1/admin/oauth/' + provider + '/start').then(function (res) {
+        if (res.code !== 0) { toast(res.msg || '绑定失败', false); return; }
+        var w = window.open(res.data.authUrl, '_blank', 'width=640,height=720');
+        if (w) toast('请在打开的窗口中完成授权', true);
+        else toast('请允许浏览器弹出窗口完成授权，授权后如未自动刷新请手动刷新本页', false);
+      });
+    }
+  }
+
+  /* ===== 邮箱验证码登录 / 绑定 ===== */
+  function togglePwd(id, btn) {
+    var inp = document.getElementById(id);
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    var icon = btn.querySelector('i');
+    icon.className = show ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+  }
+  function switchLoginTab(mode) {
+    $('loginTabPwd').className = 'login-tab' + (mode === 'pwd' ? ' active' : '');
+    $('loginTabEmail').className = 'login-tab' + (mode === 'email' ? ' active' : '');
+    $('loginTabReg').className = 'login-tab' + (mode === 'reg' ? ' active' : '');
+    $('loginPwdForm').style.display = mode === 'pwd' ? 'block' : 'none';
+    $('loginEmailForm').style.display = mode === 'email' ? 'block' : 'none';
+    $('loginRegForm').style.display = mode === 'reg' ? 'block' : 'none';
+    $('login2faForm').style.display = 'none';
+    preAuthToken = null;
+    if (mode === 'email') $('loginEmail').focus();
+    else if (mode === 'reg') $('regUser').focus();
+    else $('loginUser').focus();
+  }
+  function doRegister() {
+    var u = $('regUser').value.trim();
+    var p = $('regPass').value;
+    if (!u || !p) { toast('请输入用户名和密码', false); return; }
+    var btn = $('regBtn'); btn.disabled = true;
+    api('POST', '/api/v1/admin/register', { username: u, password: p }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '注册失败', false); return; }
+      toast(res.msg || '注册成功，请登录', true);
+      $('loginUser').value = u;
+      $('regPass').value = '';
+      switchLoginTab('pwd');
+      $('loginPass').focus();
+    }).finally(function () { btn.disabled = false; });
+  }
+  // 发送验证码（scene: 'login' 登录页 / 'bind' 个人中心绑定），带 60s 倒计时
+  var emailCodeTimer = null;
+  function sendEmailCode(scene) {
+    var email = scene === 'login' ? $('loginEmail').value.trim() : $('pfEmailInput').value.trim();
+    var btn = scene === 'login' ? $('loginEmailSendBtn') : $('pfEmailSendBtn');
+    if (!email) { toast('请输入邮箱', false); return; }
+    var url = scene === 'login' ? '/api/v1/admin/email/send-code' : '/api/v1/admin/email/bind-send-code';
+    btn.disabled = true;
+    api('POST', url, { email: email }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '发送失败', false); btn.disabled = false; return; }
+      toast(res.msg || '验证码已发送', true);
+      var left = 60;
+      btn.textContent = left + 's';
+      emailCodeTimer = setInterval(function () {
+        left--;
+        if (left <= 0) { clearInterval(emailCodeTimer); emailCodeTimer = null; btn.textContent = '获取验证码'; btn.disabled = false; }
+        else btn.textContent = left + 's';
+      }, 1000);
+    }).catch(function () { btn.disabled = false; });
+  }
+  function doEmailLogin() {
+    var email = $('loginEmail').value.trim();
+    var code = $('loginEmailCode').value.trim();
+    if (!email || !code) { toast('请输入邮箱和验证码', false); return; }
+    var btn = $('loginEmailBtn'); btn.disabled = true;
+    api('POST', '/api/v1/admin/email/login', { email: email, code: code }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '登录失败', false); return; }
+      token = res.data.token;
+      localStorage.setItem('lc_token', token);
+      localStorage.setItem('lc_user', email);
+      showMain();
+      initCustomSelects();
+      loadSites();
+      switchTab('pending');
+      toast('登录成功', true);
+    }).finally(function () { btn.disabled = false; });
+  }
+  function pfEmailAction() {
+    var p = state.profile;
+    if (!p) return;
+    if (p.emailBound) {
+      if (!confirm('确定解绑邮箱吗？解绑后该邮箱将无法用于登录。')) return;
+      api('DELETE', '/api/v1/admin/email').then(function (res) {
+        if (res.code !== 0) { toast(res.msg || '解绑失败', false); return; }
+        toast('已解绑邮箱', true);
+        loadProfile();
+      });
+    } else {
+      var f = $('pfEmailForm');
+      f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+  }
+  function doBindEmail() {
+    var email = $('pfEmailInput').value.trim();
+    var code = $('pfEmailCode').value.trim();
+    if (!email || !code) { toast('请输入邮箱和验证码', false); return; }
+    api('POST', '/api/v1/admin/email/bind', { email: email, code: code }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '绑定失败', false); return; }
+      toast(res.msg || '绑定成功', true);
+      $('pfEmailCode').value = '';
+      loadProfile();
+    });
+  }
+
+  /* ===== 数据（导入导出 / 一键备份） ===== */
+  // 带 Authorization 头的基础请求（导出/备份是文件流，不能用 api() 的 JSON 封装）
+  function authFetch(path, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    if (token) options.headers.Authorization = 'Bearer ' + token;
+    return fetch(API + path, options);
+  }
+  function downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  function doExport() {
+    authFetch('/api/v1/admin/export?site=' + encodeURIComponent(state.site)).then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.blob();
+    }).then(function (blob) {
+      downloadBlob(blob, 'dwx-comment-export-' + new Date().toISOString().slice(0, 10) + '.json');
+      toast('导出成功', true);
+    }).catch(function (e) { toast('导出失败：' + e.message, false); });
+  }
+  function doImport() {
+    var file = $('importFile').files[0];
+    if (!file) { toast('请先选择导入文件', false); return; }
+    var btn = $('importBtn'); btn.disabled = true;
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('source', $('importSource').value);
+    authFetch('/api/v1/admin/migrate', { method: 'POST', body: fd }).then(function (resp) {
+      return resp.json().catch(function () { return { code: -1, msg: 'HTTP ' + resp.status }; });
+    }).then(function (res) {
+      if (res.code !== 0) { toast(res.msg || '导入失败', false); return; }
+      var d = res.data || {};
+      toast('导入完成：新增 ' + d.imported + ' 条，跳过 ' + d.skipped + ' 条', true);
+      if (state.tab === 'all') loadAll(1);
+    }).catch(function (e) { toast('导入失败：' + e.message, false); })
+      .finally(function () { btn.disabled = false; });
+  }
+  function doBackup() {
+    authFetch('/api/v1/admin/backup').then(function (resp) {
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      return resp.blob();
+    }).then(function (blob) {
+      var d = new Date();
+      function pad(n) { return n < 10 ? '0' + n : '' + n; }
+      var fn = 'comment-' + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + '_' + pad(d.getHours()) + pad(d.getMinutes()) + pad(d.getSeconds()) + '.db';
+      downloadBlob(blob, fn);
+      toast('备份已下载', true);
+    }).catch(function (e) { toast('备份失败：' + e.message, false); });
+  }
+
+  /* ===== OAuth 回调（弹窗模式：回调页 postMessage 通知） ===== */
+  // oauth-callback：个人中心发起第三方绑定
+  window.addEventListener('message', function (e) {
+    // 仅信任同源回调（第三方绑定弹窗与本后台同源），防任意页面伪造 oauth 消息污染会话
+    if (e.origin !== window.location.origin) return;
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'oauth-callback') {
+      if (e.data.success) toast(e.data.msg || '绑定成功', true);
+      else toast(e.data.msg || '绑定失败', false);
+      if (state.tab !== 'profile') switchTab('profile');
+      else loadProfile();
+    }
+  });
+
+  /* ===== 初始化 ===== */
+  // URL 参数：tab（直接定位标签页）、oauth/status（同窗口回调模式的结果回显）
+  var urlParams = new URLSearchParams(location.search);
+  var initTab = urlParams.get('tab');
+  var oauthProvider = urlParams.get('oauth');
+  var oauthStatus = urlParams.get('status');
+  token = localStorage.getItem('lc_token') || null;
+  if (token) {
+    showMain();
+    initCustomSelects();
+    loadSites();
+    switchTab(initTab === 'profile' ? 'profile' : 'pending');
+    if (oauthProvider) {
+      toast(oauthStatus === 'ok' ? '第三方账号绑定成功' : '第三方账号绑定失败，请重试', oauthStatus === 'ok');
+    }
+  }
+  else { showLogin(); initCustomSelects(); }
+  window.doLogin = doLogin;
+  window.doLogin2FA = doLogin2FA;
+  window.showLogin = showLogin;
+  window.togglePwd = togglePwd;
+  window.doRegister = doRegister;
+  window.switchLoginTab = switchLoginTab;
+  window.sendEmailCode = sendEmailCode;
+  window.doEmailLogin = doEmailLogin;
+  window.pfEmailAction = pfEmailAction;
+  window.doBindEmail = doBindEmail;
+  window.doLogout = doLogout;
+  window.switchTab = switchTab;
+  window.switchSite = switchSite;
+  window.toggleUserMenu = toggleUserMenu;
+  window.loadAll = loadAll;
+  window.loadReplied = loadReplied;
+  window.searchAll = searchAll;
+  window.searchReplied = searchReplied;
+  window.saveSettings = saveSettings;
+  window.changePassword = changePassword;
+  window.pfAction = pfAction;
+  window.toggle2FA = toggle2FA;
+  window.doExport = doExport;
+  window.doImport = doImport;
+  window.doBackup = doBackup;
+  window.scrollToTop = scrollToTop;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "light-comment-front",
+  "version": "0.1.0",
+  "private": true,
+  "description": "dwxComment 前端评论组件构建（esbuild 打包压缩）",
+  "scripts": {
+    "build": "esbuild front/comment.js --minify --outfile=front/comment.min.js && esbuild front/comment.css --minify --outfile=front/comment.min.css",
+    "watch": "esbuild front/comment.js --minify --outfile=front/comment.min.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

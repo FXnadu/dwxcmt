@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dwxComment 评论组件演示</title>
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+  <link rel="stylesheet" href="comment.min.css">
+  <style>
+    :root {
+      --bg: #efeeeb;
+      --surface: rgba(255, 255, 255, 0.65);
+      --surface-strong: rgba(255, 255, 255, 0.85);
+      --text: #24262b;
+      --muted: rgba(36, 38, 43, 0.62);
+      --border: rgba(36, 38, 43, 0.1);
+      --border-hover: rgba(36, 38, 43, 0.22);
+      --ice: #70687a;
+      --violet: #6e627a;
+      --radius: 2px;
+      --shadow: 0 1px 2px rgba(36,38,43,.04), 0 2px 8px rgba(36,38,43,.06);
+      --font-display: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #030305;
+        --surface: rgba(255, 255, 255, 0.04);
+        --surface-strong: rgba(255, 255, 255, 0.07);
+        --text: rgb(255, 252, 225);
+        --muted: rgba(196, 184, 206, 0.65);
+        --border: rgba(255, 255, 255, 0.08);
+        --border-hover: rgba(255, 255, 255, 0.18);
+        --ice: #c4b8ce;
+        --violet: #b8a8c8;
+        --shadow: 0 1px 2px rgba(0,0,0,.2), 0 2px 8px rgba(0,0,0,.3);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 40px 16px 80px;
+      font-family: var(--font-body);
+      font-weight: 300;
+      font-size: 14px;
+      line-height: 1.7;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .topbar h1 {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      margin: 0;
+      color: var(--text);
+    }
+    .topbar h1::before {
+      content: 'dwx';
+      color: var(--ice);
+      margin-right: 0.35em;
+    }
+    .topbar .desc {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .demo-article {
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+    .demo-article h2 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 400;
+      margin: 0 0 0.6rem;
+      color: var(--text);
+    }
+    .demo-article p {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      body { padding-top: 24px; }
+      .topbar { flex-wrap: wrap; }
+      .topbar .desc { width: 100%; margin-left: 0; }
+      .card { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Comment</h1>
+      <span class="desc">dwxComment 评论组件演示</span>
+    </div>
+
+    <article class="demo-article card">
+      <h2>示例文章</h2>
+      <p>这是一篇用于演示评论组件挂载效果的示例文章。下方是评论组件的实际渲染区域，风格已与后台管理保持一致。</p>
+    </article>
+
+    <!-- 评论组件挂载点：data-page-id 必填，可用 ?pageId=/xxx 覆盖 -->
+    <div id="light-comment"
+         data-page-id="/post/demo.html"
+         data-site="default"
+         data-server="">
+    </div>
+  </div>
+
+  <script>
+    // 演示页调试：?pageId=/post 可覆盖挂载点的 data-page-id，便于查看其他页面评论
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var pid = params.get('pageId');
+      if (pid) document.getElementById('light-comment').setAttribute('data-page-id', pid);
+    })();
+  </script>
+  <script src="comment.min.js" defer></script>
+</body>
+</html>
