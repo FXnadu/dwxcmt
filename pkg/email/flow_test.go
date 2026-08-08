@@ -44,9 +44,9 @@ func waitMails(t *testing.T, m *mockSMTP, n int, timeout time.Duration) []mockMa
 }
 
 // TestMockSMTP_EmailFlow 覆盖完整邮件链路：
-//   1) 验证码邮件（SendEmailCode，同步发送）
-//   2) 新评论通知管理员（NotifyNewComment，异步）
-//   3) 站长回复通知被回复者（NotifyReply，异步）
+//  1. 验证码邮件（SendEmailCode，同步发送）
+//  2. 新评论通知管理员（NotifyNewComment，异步）
+//  3. 站长回复通知被回复者（NotifyReply，异步）
 func TestMockSMTP_EmailFlow(t *testing.T) {
 	m := startMockSMTP(t)
 	svc := startService(t, &config.SMTPConfig{
@@ -103,7 +103,8 @@ func TestMockSMTP_EmailFlow(t *testing.T) {
 }
 
 // TestMockSMTP_NoSMTP_Skip SMTP 未配置时的降级行为：
-//   验证码直接报错；评论通知静默跳过，不产生任何邮件、不影响主流程。
+//
+//	验证码直接报错；评论通知静默跳过，不产生任何邮件、不影响主流程。
 func TestMockSMTP_NoSMTP_Skip(t *testing.T) {
 	m := startMockSMTP(t)
 	svc := startService(t, &config.SMTPConfig{}) // SMTP 全空

@@ -38,8 +38,8 @@ func (s *Service) CheckDuplicate(ip, pageID, content string) (bool, error) {
 // 现在将「INSERT OR IGNORE + 条件 UPDATE」放入单个写事务，
 // 借助 SQLite 单写者串行化保证并发安全：
 //
-//	1) INSERT OR IGNORE 确保当日记录存在（count=0 起）
-//	2) UPDATE ... WHERE count < 上限 → RowsAffected=1 表示扣减成功
+//  1. INSERT OR IGNORE 确保当日记录存在（count=0 起）
+//  2. UPDATE ... WHERE count < 上限 → RowsAffected=1 表示扣减成功
 //
 // 若递增成功但后续业务失败导致评论未入库，该 IP 的当日计数会多 1（可接受，
 // 攻击者无法借此获益，只是少量消耗自身配额）。

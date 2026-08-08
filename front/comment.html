@@ -131,7 +131,7 @@
     </article>
 
     <!-- 评论组件挂载点：data-page-id 必填，可用 ?pageId=/xxx 覆盖 -->
-    <div id="light-comment"
+    <div id="dwx-comment"
          data-page-id="/post/demo.html"
          data-site="default"
          data-server="">
@@ -143,7 +143,7 @@
     (function () {
       var params = new URLSearchParams(window.location.search);
       var pid = params.get('pageId');
-      if (pid) document.getElementById('light-comment').setAttribute('data-page-id', pid);
+      if (pid) document.getElementById('dwx-comment').setAttribute('data-page-id', pid);
     })();
   </script>
   <script src="comment.js" defer></script>

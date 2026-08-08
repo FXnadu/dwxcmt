@@ -798,7 +798,7 @@
         <div class="form-grid">
           <div class="field"><label>数据源格式</label>
             <select class="custom-select" id="importSource">
-              <option value="lightcomment" selected>dwxComment（本系统导出）</option>
+              <option value="dwxcomment" selected>dwxComment（本系统导出）</option>
               <option value="waline">waline</option>
               <option value="twikoo">twikoo</option>
               <option value="disqus">disqus</option>
@@ -1649,7 +1649,7 @@
     boxEl.className = 'cmt-reply-box';
     boxEl.innerHTML =
       '<div class="cmt-reply-target">以站长身份回复 @' + esc(nick) + '（回复将直接展示在前台）</div>' +
-      '<textarea maxlength="1000" placeholder="回复内容（1~1000 字）"></textarea>' +
+      '<textarea maxlength="500" placeholder="回复内容（1~500 字）"></textarea>' +
       '<div class="cmt-emoji-bar">' +
         '<button type="button" class="btn btn-sm" data-emoji-toggle><i class="fa-regular fa-face-smile icon-left"></i>表情</button>' +
         '<div class="cmt-emoji-panel">' + emojis + '</div>' +

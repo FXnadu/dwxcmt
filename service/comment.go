@@ -50,7 +50,10 @@ func (s *Service) SubmitComment(req *SubmitRequest, ip, userAgent string) (int64
 		return 0, 0, newValidationErr(utils.CodeErrNickInvalid)
 	}
 	if req.Content == "" || utf8.RuneCountInString(req.Content) > s.Cfg.Comment.ContentMaxLength {
-		return 0, 0, newValidationErr(utils.CodeErrContentInvalid)
+		return 0, 0, &ErrValidation{
+			Code: utils.CodeErrContentInvalid,
+			Msg:  fmt.Sprintf("评论内容长度不符合要求（1~%d 字符）", s.Cfg.Comment.ContentMaxLength),
+		}
 	}
 	if req.Email != "" && !emailRe.MatchString(req.Email) {
 		return 0, 0, newValidationErr(utils.CodeErrEmailInvalid)
@@ -170,7 +173,10 @@ func (s *Service) SubmitComment(req *SubmitRequest, ip, userAgent string) (int64
 func (s *Service) ReplyComment(parentID int64, content string) (int64, error) {
 	content = strings.TrimSpace(content)
 	if content == "" || utf8.RuneCountInString(content) > s.Cfg.Comment.ContentMaxLength {
-		return 0, newValidationErr(utils.CodeErrContentInvalid)
+		return 0, &ErrValidation{
+			Code: utils.CodeErrContentInvalid,
+			Msg:  fmt.Sprintf("评论内容长度不符合要求（1~%d 字符）", s.Cfg.Comment.ContentMaxLength),
+		}
 	}
 	parent, err := s.GetComment(parentID)
 	if errors.Is(err, model.ErrNotFound) {

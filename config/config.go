@@ -20,16 +20,16 @@ var ErrInsecureJWTSecret = errors.New("仍使用默认 JWT 密钥，请在 confi
 
 // Config 全量配置，对应 config/config.yaml
 type Config struct {
-	Server        ServerConfig        `yaml:"server"`
-	Database      DatabaseConfig      `yaml:"database"`
-	Auth          AuthConfig          `yaml:"auth"`
-	QQOAuth       QQOAuthConfig       `yaml:"qq_oauth"`
-	GitHubOAuth   GitHubOAuthConfig   `yaml:"github_oauth"`
-	SMTP          SMTPConfig          `yaml:"smtp"`
-	RateLimit     RateLimitConfig     `yaml:"rate_limit"`
-	Comment       CommentConfig       `yaml:"comment"`
-	CORS          CORSConfig          `yaml:"cors"`
-	TrustedProxy  TrustedProxyConfig  `yaml:"trusted_proxy"`
+	Server       ServerConfig       `yaml:"server"`
+	Database     DatabaseConfig     `yaml:"database"`
+	Auth         AuthConfig         `yaml:"auth"`
+	QQOAuth      QQOAuthConfig      `yaml:"qq_oauth"`
+	GitHubOAuth  GitHubOAuthConfig  `yaml:"github_oauth"`
+	SMTP         SMTPConfig         `yaml:"smtp"`
+	RateLimit    RateLimitConfig    `yaml:"rate_limit"`
+	Comment      CommentConfig      `yaml:"comment"`
+	CORS         CORSConfig         `yaml:"cors"`
+	TrustedProxy TrustedProxyConfig `yaml:"trusted_proxy"`
 }
 
 type ServerConfig struct {
@@ -103,7 +103,7 @@ func Default() *Config {
 			CommentsPerDay:    20,
 		},
 		Comment: CommentConfig{
-			ContentMaxLength: 1000,
+			ContentMaxLength: 500,
 			NickMaxLength:    20,
 			MaxPinnedPerPage: 3,
 			MaxReplyDepth:    3,

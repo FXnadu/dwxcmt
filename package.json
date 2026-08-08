@@ -1,5 +1,5 @@
 {
-  "name": "light-comment-front",
+  "name": "dwx-comment-front",
   "version": "0.1.0",
   "private": true,
   "description": "dwxComment 前端评论组件构建（esbuild 打包压缩）",

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# monitor.sh —— LightComment 内存稳定性观测脚本（Linux 服务器使用）
+# monitor.sh —— dwxComment 内存稳定性观测脚本（Linux 服务器使用）
 #
 # 用法:
 #   bash monitor.sh <PID> <输出CSV> [pprof端口]
-#   例: bash monitor.sh $(pgrep -f light-comment) /var/log/lc-monitor.csv
+#   例: bash monitor.sh $(pgrep -f dwx-comment) /var/log/lc-monitor.csv
 #
 # 说明:
 #   - 每秒采样 VmRSS / VmSize / goroutines / HeapInuse 追加写入 CSV

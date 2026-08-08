@@ -96,14 +96,15 @@
 .lc-title { font-family: "Space Grotesk", "Inter", sans-serif; font-size: 16px; font-weight: 400; letter-spacing: -0.02em; }
 .lc-count { color: var(--lc-text-2); font-size: 13px; }
 .lc-spacer { flex: 1; }
-.lc-sort {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding: 5px 28px 5px 12px;
+.lc-sort { position: relative; display: inline-block; }
+.lc-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px 5px 12px;
   border: 1px solid var(--lc-border);
   border-radius: var(--lc-radius);
-  background: var(--lc-surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='currentColor' d='M4 6l4 4 4-4z'/%3E%3C/svg%3E") no-repeat right 8px center / 14px;
+  background: var(--lc-surface);
   color: var(--lc-text);
   font-size: 13px;
   font-family: inherit;
@@ -112,8 +113,38 @@
   outline: none;
   transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
 }
-.lc-sort:hover, .lc-sort:focus { border-color: var(--lc-border-hover); background-color: var(--lc-surface-strong); }
-.lc-sort:focus-visible { box-shadow: 0 0 0 2px var(--lc-border-hover); }
+.lc-sort-btn:hover, .lc-sort-btn:focus { border-color: var(--lc-border-hover); background-color: var(--lc-surface-strong); }
+.lc-sort-btn:focus-visible { box-shadow: 0 0 0 2px var(--lc-border-hover); }
+.lc-sort-arrow { color: var(--lc-text-2); transition: transform .15s ease; }
+.lc-sort.lc-open .lc-sort-arrow { transform: rotate(180deg); }
+.lc-sort-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--lc-surface-strong);
+  border: 1px solid var(--lc-border);
+  border-radius: var(--lc-radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+.lc-sort-menu[hidden] { display: none; }
+.lc-sort-menu li {
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--lc-text);
+  border-radius: var(--lc-radius);
+  cursor: pointer;
+}
+.lc-sort-menu li:hover { background: var(--lc-hover); }
+.lc-sort-menu li:focus-visible { background: var(--lc-hover); outline: none; }
+.lc-sort-menu li[aria-selected="true"] { color: var(--lc-accent); }
 
 .lc-empty { color: var(--lc-text-2); text-align: center; padding: 32px 0; font-size: 13px; }
 .lc-error { color: var(--lc-danger); padding: 12px 0; font-size: 13px; }

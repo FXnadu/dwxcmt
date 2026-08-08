@@ -24,6 +24,8 @@ func New(cfg *config.Config, svc *service.Service, auth *middleware.Auth, global
 	api.HandleFunc("GET /api/v1/site-config", commentCtl.SiteConfig)
 	api.HandleFunc("POST /api/v1/comment", commentCtl.Submit)
 	api.HandleFunc("POST /api/v1/comment/{id}/like", commentCtl.Like)
+	// QQ 头像代理（脱敏：公开响应不含 QQ 号，由服务端代拉图片）
+	api.HandleFunc("GET /api/v1/avatars/{id}", commentCtl.Avatar)
 
 	// ===== 管理接口 =====
 	// 注册 / 登录不要求 JWT，但均加严格限流（bcrypt cost=12 计算开销大，防 CPU 耗尽 DoS）

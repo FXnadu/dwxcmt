@@ -38,7 +38,7 @@ const (
 var codeMessages = map[int]string{
 	CodeOK:                   "success",
 	CodeErrInvalidParam:      "参数校验失败",
-	CodeErrContentInvalid:    "评论内容长度不符合要求（1~1000 字符）",
+	CodeErrContentInvalid:    "评论内容长度不符合要求（1~500 字符）",
 	CodeErrNickInvalid:       "昵称长度不符合要求（1~20 字符）",
 	CodeErrEmailInvalid:      "邮箱格式无效",
 	CodeErrURLInvalid:        "URL 格式无效",

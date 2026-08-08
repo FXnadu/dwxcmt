@@ -21,10 +21,10 @@ config/config.yaml
 .deploy/
 
 # 编译产物
-light-comment
-light-comment.exe
-light-comment-test.exe
-light-comment-linux
+dwx-comment
+dwx-comment.exe
+dwx-comment-test.exe
+dwx-comment-linux
 
 # 前端构建
 node_modules/

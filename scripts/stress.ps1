@@ -62,13 +62,13 @@ $heyPath = $hey.Source
 
 log "预检: $Base/api/v1/health"
 & curl.exe -sf --max-time 5 "$Base/api/v1/health" | Out-Null
-if ($LASTEXITCODE -ne 0) { die "服务不可达，请先启动 light-comment" }
+if ($LASTEXITCODE -ne 0) { die "服务不可达，请先启动 dwx-comment" }
 log "预检: pprof $Pprof/debug/pprof/goroutine"
 & curl.exe -sf --max-time 5 "$Pprof/debug/pprof/goroutine?debug=1" | Out-Null
 if ($LASTEXITCODE -ne 0) { die "pprof 不可达（应为 127.0.0.1:6060）" }
 
-$proc = Get-Process -Name light-comment -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $proc) { die "找不到 light-comment 进程" }
+$proc = Get-Process -Name dwx-comment -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $proc) { die "找不到 dwx-comment 进程" }
 $lcPid = $proc.Id
 log "观测进程 PID=$lcPid"
 
@@ -198,7 +198,7 @@ function Invoke-MixedPhase {
 }
 
 # ---------- 主流程 ----------
-log "== LightComment Windows 压测开始，输出目录: $out =="
+log "== dwxComment Windows 压测开始，输出目录: $out =="
 
 $beforeHeap = Get-HeapInuseBytes
 $beforeRss = Get-WorkingSetBytes

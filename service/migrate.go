@@ -93,7 +93,7 @@ func (s *Service) pruneBackups(backupDir string) error {
 }
 
 // ExportItem 导出文件单条记录（本系统原生格式）。
-// 导入时可用 source=lightcomment，或因含 pageId 字段被自动识别，保证导出文件可回读。
+// 导入时可用 source=dwxcomment，或因含 pageId 字段被自动识别，保证导出文件可回读。
 // 注：v3 迁移已删除 image_url 列（图床功能移除），故不再输出该字段。
 type ExportItem struct {
 	ID         int64  `json:"id"`
@@ -220,7 +220,7 @@ type importRecord struct {
 }
 
 // ImportComments 从 JSON 文件导入评论。
-// source 支持 lightcomment（本系统导出格式）/ waline / twikoo / disqus，其余拒绝（1001）。
+// source 支持 dwxcomment（本系统导出格式）/ waline / twikoo / disqus，其余拒绝（1001）。
 // 规则：同 page_id + content 已存在则跳过；非法记录（缺昵称/内容/页码或超长）计入 skipped；
 // 父评论先查本批次映射，其次原生格式直连库中已有 id；事务批量写入，失败整体回滚。
 func (s *Service) ImportComments(source string, data []byte) (ImportResult, error) {
@@ -369,7 +369,7 @@ func parseImportRecords(raw []map[string]interface{}, source string) ([]importRe
 		}
 	}
 	switch strings.ToLower(strings.TrimSpace(source)) {
-	case "lightcomment":
+	case "dwxcomment":
 		return parseNative(raw)
 	case "waline":
 		return parseWaline(raw)

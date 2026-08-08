@@ -122,8 +122,10 @@ func TestReplied_KeywordFilter(t *testing.T) {
 		t.Fatalf("关键词筛选失败: code=%d msg=%s", resp.Code, resp.Msg)
 	}
 	var data struct {
-		List  []struct{ Content string `json:"content"` } `json:"list"`
-		Total int                                        `json:"total"`
+		List []struct {
+			Content string `json:"content"`
+		} `json:"list"`
+		Total int `json:"total"`
 	}
 	if err := json.Unmarshal(resp.Data, &data); err != nil {
 		t.Fatalf("解析响应失败: %v", err)

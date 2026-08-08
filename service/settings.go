@@ -16,7 +16,7 @@ const (
 	KeyNoticeEmail = "noticeEmail"
 	KeyNotifyNew   = "notifyNewComment"
 	KeyNotifyReply = "notifyReply"
-	KeyAuditMode   = "auditMode" // 固定 "all"，不可修改
+	KeyAuditMode   = "auditMode"   // 固定 "all"，不可修改
 	KeyAdminBadge  = "adminBadge"  // 站长徽章文案，默认「站长」
 	KeyAdminAvatar = "adminAvatar" // 站长头像 URL，默认空 = 使用字母头像
 	KeyAdminNick   = "adminNick"   // 站长昵称（站长回复显示），默认「站长」

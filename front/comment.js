@@ -24,7 +24,8 @@
     sort: 'asc',
     maxDepth: 3,
     emojiPanel: true,
-    darkMode: 'auto'       // auto | light | dark
+    darkMode: 'auto',      // auto | light | dark
+    maxLength: 500         // 评论字数上限，与服务端 content_max_length 默认一致；配置接口返回后覆盖
   };
 
   var EMOJIS = ['😀', '😄', '😁', '😊', '🙂', '😉', '😍', '😘', '😜', '🤪', '😝', '😛', '🤔', '🤨', '😐', '😑', '😶', '🫢', '🤭', '🤫', '🤗', '🥰', '😋', '😎', '🥳', '🤩', '🥺', '😌', '😏', '😒', '😓', '😔', '🙃', '😭', '😱', '😤', '😢', '😡', '😠', '😬', '🥱', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🥵', '🥶', '😇', '😈', '👻', '💀', '👍', '👎', '👏', '🙏', '💪', '🤝', '✌️', '🤞', '🤟', '👌', '👋', '🤙', '❤️', '💔', '💕', '💖', '💯', '🎉', '🎊', '🔥', '✨', '⭐', '🌟', '💫', '💥', '🎯'];
@@ -175,7 +176,7 @@
     this.replyingTo = null; // {id, nick, rootId}
     this.loading = false;
     this.moreCount = 0;
-    this.siteConfig = { adminBadge: '站长', adminAvatar: '', adminNick: '站长' };
+    this.siteConfig = { adminBadge: '站长', adminAvatar: '', adminNick: '站长', maxLength: DEFAULTS.maxLength };
 
     this.build();
   }
@@ -193,13 +194,13 @@
           '<span class="lc-spacer"></span>' +
           '<div class="lc-sort" aria-label="排序方式">' +
             '<button type="button" class="lc-sort-btn" aria-haspopup="listbox" aria-expanded="false">' +
-              '<span class="lc-sort-label">正序</span>' +
+              '<span class="lc-sort-label">最新</span>' +
               '<svg class="lc-sort-arrow" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 6l4 4 4-4z"/></svg>' +
             '</button>' +
             '<ul class="lc-sort-menu" role="listbox" hidden>' +
-              '<li role="option" data-value="asc">正序</li>' +
-              '<li role="option" data-value="desc">倒序</li>' +
-              '<li role="option" data-value="hot">热度</li>' +
+              '<li role="option" data-value="asc" tabindex="-1">最新</li>' +
+              '<li role="option" data-value="desc" tabindex="-1">倒序</li>' +
+              '<li role="option" data-value="hot" tabindex="-1">热度</li>' +
             '</ul>' +
           '</div>' +
         '</div>' +
@@ -210,13 +211,13 @@
             '<input class="lc-input lc-link" type="text" placeholder="网站（选填）">' +
           '</div>' +
           '<div class="lc-reply-bar" style="display:none"></div>' +
-          '<textarea class="lc-textarea" rows="4" maxlength="1000" placeholder="写下你的评论…支持 Emoji 与图片 URL"></textarea>' +
+          '<textarea class="lc-textarea" rows="4" maxlength="' + this.siteConfig.maxLength + '" placeholder="写下你的评论…支持 Emoji 与图片 URL"></textarea>' +
           '<div class="lc-form-foot">' +
             '<span class="lc-toolbar">' +
               '<button type="button" class="lc-btn lc-emoji-btn">😊 表情</button>' +
               '<button type="button" class="lc-btn lc-clear-btn" style="display:none">清除信息</button>' +
             '</span>' +
-            '<span class="lc-char-count">0/1000</span>' +
+            '<span class="lc-char-count">0/' + this.siteConfig.maxLength + '</span>' +
             '<button type="submit" class="lc-btn lc-submit-btn">发表评论</button>' +
           '</div>' +
           '<div class="lc-emoji-panel" style="display:none"></div>' +
@@ -271,6 +272,25 @@
     }
   };
 
+  // 打开排序下拉
+  dwxComment.prototype.openSortMenu = function () {
+    this.sortMenuEl.hidden = false;
+    this.sortBtnEl.setAttribute('aria-expanded', 'true');
+    this.sortEl.classList.add('lc-open');
+  };
+
+  // 关闭排序下拉
+  dwxComment.prototype.closeSortMenu = function () {
+    this.sortMenuEl.hidden = true;
+    this.sortBtnEl.setAttribute('aria-expanded', 'false');
+    this.sortEl.classList.remove('lc-open');
+  };
+
+  // 键盘导航：返回当前选项索引（无选中时以首个为基准）
+  dwxComment.prototype.sortOptions = function () {
+    return this.sortMenuEl.querySelectorAll('[role="option"]');
+  };
+
   dwxComment.prototype.bindEvents = function () {
     var self = this;
 
@@ -278,35 +298,72 @@
     if (this.sortEl) {
       this.sortBtnEl.addEventListener('click', function (e) {
         e.stopPropagation();
-        var open = self.sortMenuEl.hidden;
-        self.sortMenuEl.hidden = !open;
-        self.sortBtnEl.setAttribute('aria-expanded', String(!open));
-        self.sortEl.classList.toggle('lc-open', !open);
+        if (self.sortMenuEl.hidden) {
+          self.openSortMenu();
+        } else {
+          self.closeSortMenu();
+        }
+      });
+      // 键盘打开菜单并聚焦当前/首项
+      this.sortBtnEl.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          var opts = self.sortOptions();
+          var cur = self.sortMenuEl.querySelector('[aria-selected="true"]');
+          var idx = Array.prototype.indexOf.call(opts, cur);
+          if (self.sortMenuEl.hidden) self.openSortMenu();
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            idx = e.key === 'ArrowDown'
+              ? (idx + 1) % opts.length
+              : (idx - 1 + opts.length) % opts.length;
+            opts[idx].focus();
+          } else if (idx >= 0) {
+            opts[idx].focus();
+          }
+        }
+      });
+      // 菜单内方向键/Home/End/Enter/Space 选择，Esc 关闭
+      this.sortMenuEl.addEventListener('keydown', function (e) {
+        var opts = self.sortOptions();
+        var idx = Array.prototype.indexOf.call(opts, e.target);
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          idx = e.key === 'ArrowDown'
+            ? (idx + 1) % opts.length
+            : (idx - 1 + opts.length) % opts.length;
+          opts[idx].focus();
+        } else if (e.key === 'Home' || e.key === 'End') {
+          e.preventDefault();
+          (e.key === 'Home' ? opts[0] : opts[opts.length - 1]).focus();
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          self.sort = e.target.getAttribute('data-value');
+          self.setSortLabel();
+          self.closeSortMenu();
+          self.loadPage(1);
+        } else if (e.key === 'Escape') {
+          self.closeSortMenu();
+          self.sortBtnEl.focus();
+        }
       });
       this.sortMenuEl.addEventListener('click', function (e) {
         var opt = e.target.closest('[role="option"]');
         if (!opt) return;
         self.sort = opt.getAttribute('data-value');
         self.setSortLabel();
-        self.sortMenuEl.hidden = true;
-        self.sortBtnEl.setAttribute('aria-expanded', 'false');
-        self.sortEl.classList.remove('lc-open');
+        self.closeSortMenu();
         self.loadPage(1);
       });
       // 点击外部关闭
       document.addEventListener('click', function (e) {
         if (!self.sortEl.contains(e.target) && !self.sortMenuEl.hidden) {
-          self.sortMenuEl.hidden = true;
-          self.sortBtnEl.setAttribute('aria-expanded', 'false');
-          self.sortEl.classList.remove('lc-open');
+          self.closeSortMenu();
         }
       });
       // Esc 关闭
       document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape' && !self.sortMenuEl.hidden) {
-          self.sortMenuEl.hidden = true;
-          self.sortBtnEl.setAttribute('aria-expanded', 'false');
-          self.sortEl.classList.remove('lc-open');
+          self.closeSortMenu();
           self.sortBtnEl.focus();
         }
       });
@@ -314,7 +371,7 @@
 
     // 字数统计
     this.textEl.addEventListener('input', function () {
-      self.charCountEl.textContent = self.textEl.value.length + '/1000';
+      self.charCountEl.textContent = self.textEl.value.length + '/' + self.siteConfig.maxLength;
     });
 
     // 表情面板
@@ -377,7 +434,7 @@
       ta.value = ta.value.slice(0, start) + btn.textContent + ta.value.slice(ta.selectionEnd || start);
       ta.focus();
       ta.selectionStart = ta.selectionEnd = start + btn.textContent.length;
-      self.charCountEl.textContent = ta.value.length + '/1000';
+      self.charCountEl.textContent = ta.value.length + '/' + self.siteConfig.maxLength;
     }
   };
 
@@ -393,6 +450,13 @@
         self.siteConfig.adminBadge = res.data.adminBadge || '站长';
         self.siteConfig.adminAvatar = res.data.adminAvatar || '';
         self.siteConfig.adminNick = res.data.adminNick || '站长';
+        // 评论字数上限由后端配置下发，保证与 content_max_length 一致
+        var maxLen = parseInt(res.data.contentMaxLength, 10);
+        if (maxLen > 0) {
+          self.siteConfig.maxLength = maxLen;
+          if (self.textEl) self.textEl.maxLength = maxLen;
+          if (self.charCountEl) self.charCountEl.textContent = '0/' + maxLen;
+        }
         // 配置到达后重渲染当前页，应用自定义昵称/徽章/头像
         self.loadPage(self.page);
       }
@@ -505,7 +569,12 @@
     var candidates = [];
     if (comment.isAdmin && this.siteConfig.adminAvatar) candidates.push(this.siteConfig.adminAvatar);
     if (comment.avatarUrls && comment.avatarUrls.length) {
-      for (var k = 0; k < comment.avatarUrls.length; k++) candidates.push(comment.avatarUrls[k]);
+      for (var k = 0; k < comment.avatarUrls.length; k++) {
+        var u = comment.avatarUrls[k];
+        // 相对路径（QQ 头像代理地址）补上 API 服务器前缀，兼容跨域部署
+        if (!/^https?:\/\//i.test(u)) u = this.cfg.server + u;
+        candidates.push(u);
+      }
     }
     if (candidates.length > 0) {
       var img = document.createElement('img');
@@ -713,7 +782,7 @@
         self.toast('评论已提交', 'success');
         dispatch(self.el, 'lc:submitted', { id: res.data && res.data.id });
         self.textEl.value = '';
-        self.charCountEl.textContent = '0/1000';
+        self.charCountEl.textContent = '0/' + self.siteConfig.maxLength;
         self.cancelReply();
         self.saveUser(nick, email, link);
         // 假性通过：本地插入刚提交的评论（背景加深标识待审核），
@@ -840,5 +909,6 @@
     init();
   }
 
-  window.dwxComment = dwxComment;
+  // 构造器单独导出：window.dwxComment 保留为配置入口（不会被覆盖）
+  window.DwxComment = dwxComment;
 })(window, document);

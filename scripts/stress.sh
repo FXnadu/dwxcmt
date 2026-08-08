@@ -54,12 +54,12 @@ command -v hey >/dev/null 2>&1 || die "未安装 hey（go install github.com/rak
 command -v curl >/dev/null 2>&1 || die "未安装 curl"
 
 log "预检: $BASE/api/v1/health"
-curl -sf --max-time 5 "$BASE/api/v1/health" >/dev/null || die "服务不可达，请先启动 light-comment"
+curl -sf --max-time 5 "$BASE/api/v1/health" >/dev/null || die "服务不可达，请先启动 dwx-comment"
 log "预检: pprof $PPROF/debug/pprof/goroutine"
 curl -sf --max-time 5 "$PPROF/debug/pprof/goroutine?debug=1" >/dev/null || die "pprof 不可达（应为 127.0.0.1:6060）"
 
-PID=$(pgrep -f light-comment | head -1)
-[ -n "${PID:-}" ] || die "找不到 light-comment 进程"
+PID=$(pgrep -f dwx-comment | head -1)
+[ -n "${PID:-}" ] || die "找不到 dwx-comment 进程"
 log "观测进程 PID=$PID"
 
 # ---------- 工具函数 ----------
@@ -184,7 +184,7 @@ run_mixed_phase() {
 }
 
 # ---------- 主流程 ----------
-log "== LightComment 压测开始，输出目录: $OUT =="
+log "== dwxComment 压测开始，输出目录: $OUT =="
 
 # 压测前基线（pprof 堆接口会先 GC，取的是可回收后基线）
 BEFORE_HEAP=$(heap_inuse_bytes)

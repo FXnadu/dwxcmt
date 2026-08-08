@@ -140,7 +140,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("dwxComment v%s 启动，监听 :%d", controller.Version, cfg.Server.Port)
+	log.Printf("dwxComment %s 启动，监听 :%d", controller.Version, cfg.Server.Port)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("服务启动失败: %v", err)
 	}

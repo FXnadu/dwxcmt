@@ -28,7 +28,7 @@
 |--------|------|------|
 | `0` | OK | 成功 |
 | `1001` | ErrInvalidParam | 参数校验失败 |
-| `1002` | ErrContentInvalid | 评论内容长度不符合要求（1~1000 字符） |
+| `1002` | ErrContentInvalid | 评论内容长度不符合要求（1~500 字符） |
 | `1003` | ErrNickInvalid | 昵称长度不符合要求（1~20 字符） |
 | `1004` | ErrEmailInvalid | 邮箱格式无效 |
 | `1005` | ErrURLInvalid | URL 格式无效 |
@@ -145,7 +145,7 @@
 | `nick` | 必填，1-20 字符，去首尾空格 |
 | `email` | 选填，格式校验 |
 | `link` | 选填，URL 格式校验，≤ 200 字符 |
-| `content` | 必填，1-1000 字符（去空白后），支持 Markdown 图片语法 |
+| `content` | 必填，1-500 字符（去空白后），支持 Markdown 图片语法 |
 | `parentId` | 选填，默认 0；非 0 时校验父评论存在 |
 | `rootId` | 选填，默认 0；跟随父评论的 rootId |
 
@@ -287,7 +287,7 @@
 
 | 参数 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `content` | string | ✅ | 1~1000 字，与公开评论同一长度上限 |
+| `content` | string | ✅ | 1~500 字，与公开评论同一长度上限 |
 
 **响应示例**：
 ```json
@@ -324,12 +324,14 @@
 
 - **GET** `/api/v1/site-config?site=default`
 
-公开接口，供前台评论组件读取站长身份展示配置（无需鉴权）：
+公开接口，供前台评论组件读取站长身份展示配置与评论字数上限（无需鉴权）：
 ```json
-{ "code": 0, "msg": "success", "data": { "adminBadge": "博主", "adminAvatar": "https://example.com/me.png" } }
+{ "code": 0, "msg": "success", "data": { "adminBadge": "博主", "adminAvatar": "https://example.com/me.png", "contentMaxLength": 500 } }
 ```
 
 > 仅返回前台展示所需字段，不含任何隐私配置。
+>
+> `contentMaxLength`：评论内容字数上限（对应服务端 `comment.content_max_length`），前台据此渲染输入框 `maxlength` 与字数统计。
 
 ### 3.12 站点列表（v2.3 新增）
 

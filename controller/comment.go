@@ -63,6 +63,26 @@ func (c *CommentController) Count(w http.ResponseWriter, r *http.Request) {
 	utils.OK(w, map[string]interface{}{"count": count})
 }
 
+// Avatar GET /api/v1/avatars/{id} — QQ 头像代理接口（公开）
+// 评论者的 QQ 号不直接出现在头像 URL 中，由服务端代拉腾讯 qlogo 图片；
+// 失败返回 404，前端会回退到下一候选头像（Gravatar/Cravatar/字母头像）。
+func (c *CommentController) Avatar(w http.ResponseWriter, r *http.Request) {
+	id, err := service.ParseID(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	data, contentType, err := c.svc.QQAvatar(id)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.Write(data)
+}
+
 // maxSubmitBytes 提交评论请求体上限（64KB，远大于合法字段总和）。
 // 防止慢速大 body 长时间占用连接 / 内存（公开接口，无鉴权）。
 const maxSubmitBytes = 64 << 10
@@ -111,8 +131,9 @@ func (c *CommentController) SiteConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	utils.OK(w, map[string]interface{}{
-		"adminBadge":  st.AdminBadge,
-		"adminAvatar": st.AdminAvatar,
-		"adminNick":   st.AdminNick,
+		"adminBadge":       st.AdminBadge,
+		"adminAvatar":      st.AdminAvatar,
+		"adminNick":        st.AdminNick,
+		"contentMaxLength": c.svc.Cfg.Comment.ContentMaxLength,
 	})
 }

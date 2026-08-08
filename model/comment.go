@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"strconv"
 	"strings"
 )
 
@@ -31,19 +32,19 @@ type Comment struct {
 
 // CommentDTO 对外响应结构（含管理端隐私字段）
 type CommentDTO struct {
-	ID             int64  `json:"id"`
-	PageID         string `json:"pageId"`
-	Site           string `json:"site"`
-	Nick           string `json:"nick"`
-	Link           string `json:"link"`
-	Content        string `json:"content"`
-	AvatarUrls     []string `json:"avatarUrls,omitempty"`
-	ParentID       int64  `json:"parentId"`
-	RootID     int64  `json:"rootId"`
-	LikeCount  int    `json:"likeCount"`
-	IsPinned   int    `json:"isPinned"`
-	IsAdmin    int    `json:"isAdmin"`
-	CreateTime int64  `json:"createTime"`
+	ID         int64    `json:"id"`
+	PageID     string   `json:"pageId"`
+	Site       string   `json:"site"`
+	Nick       string   `json:"nick"`
+	Link       string   `json:"link"`
+	Content    string   `json:"content"`
+	AvatarUrls []string `json:"avatarUrls,omitempty"`
+	ParentID   int64    `json:"parentId"`
+	RootID     int64    `json:"rootId"`
+	LikeCount  int      `json:"likeCount"`
+	IsPinned   int      `json:"isPinned"`
+	IsAdmin    int      `json:"isAdmin"`
+	CreateTime int64    `json:"createTime"`
 	// 以下字段仅管理接口返回
 	Email     string `json:"email,omitempty"`
 	IP        string `json:"ip,omitempty"`
@@ -56,21 +57,21 @@ type CommentDTO struct {
 // ToDTO 转换为响应结构；includePrivate=true 时附带 email/ip/userAgent/isAudited
 func (c *Comment) ToDTO(includePrivate bool) CommentDTO {
 	dto := CommentDTO{
-		ID:             c.ID,
-		PageID:         c.PageID,
-		Site:           c.Site,
-		Nick:           c.Nick,
-		Link:           c.Link,
-		Content:        c.Content,
-		AvatarUrls:     avatarCandidates(c.Email),
-		ParentID:       c.ParentID,
-		RootID:         c.RootID,
-		LikeCount:      c.LikeCount,
-		IsPinned:       c.IsPinned,
-		IsAdmin:        c.IsAdmin,
-		CreateTime:     c.CreateTime,
-		IsAudited:      c.IsAudited,
-		private:        includePrivate,
+		ID:         c.ID,
+		PageID:     c.PageID,
+		Site:       c.Site,
+		Nick:       c.Nick,
+		Link:       c.Link,
+		Content:    c.Content,
+		AvatarUrls: avatarCandidates(c.ID, c.Email),
+		ParentID:   c.ParentID,
+		RootID:     c.RootID,
+		LikeCount:  c.LikeCount,
+		IsPinned:   c.IsPinned,
+		IsAdmin:    c.IsAdmin,
+		CreateTime: c.CreateTime,
+		IsAudited:  c.IsAudited,
+		private:    includePrivate,
 	}
 	if includePrivate {
 		dto.Email = c.Email
@@ -114,8 +115,9 @@ func (d CommentDTO) MarshalJSON() ([]byte, error) {
 
 // avatarCandidates 有邮箱时返回有序的真实头像候选地址（Gravatar → Cravatar → QQ 头像）。
 // 只返回第三方服务的查询地址，不暴露邮箱本身；前端按顺序加载，全部失败再回退字母头像。
-// QQ 邮箱（@qq.com 且本地为纯数字 QQ 号）追加腾讯 qlogo 接口，直接获取该 QQ 的真实头像（同 Waline 做法）。
-func avatarCandidates(email string) []string {
+// QQ 邮箱（@qq.com 且本地为纯数字 QQ 号）不走腾讯 qlogo 直链，而是返回本服务代理地址
+// /api/v1/avatars/{id}（由后端代拉图片），避免在公开响应中暴露 QQ 号（= 邮箱前缀）。
+func avatarCandidates(id int64, email string) []string {
 	if email == "" {
 		return nil
 	}
@@ -126,14 +128,14 @@ func avatarCandidates(email string) []string {
 		"https://www.gravatar.com/avatar/" + hash + "?d=404&s=48",
 		"https://cravatar.cn/avatar/" + hash + "?d=404&s=48",
 	}
-	if qq := qqFromEmail(lower); qq != "" {
-		cands = append(cands, "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=100")
+	if QQFromEmail(lower) != "" {
+		cands = append(cands, "/api/v1/avatars/"+strconv.FormatInt(id, 10))
 	}
 	return cands
 }
 
-// qqFromEmail 提取 QQ 邮箱中的 QQ 号（@qq.com 且本地部分须为纯数字），非 QQ 邮箱返回空串
-func qqFromEmail(lower string) string {
+// QQFromEmail 提取 QQ 邮箱中的 QQ 号（@qq.com 且本地部分须为纯数字），非 QQ 邮箱返回空串
+func QQFromEmail(lower string) string {
 	const suffix = "@qq.com"
 	if !strings.HasSuffix(lower, suffix) {
 		return ""

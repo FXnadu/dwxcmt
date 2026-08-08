@@ -7,11 +7,11 @@ import (
 
 // Limiter 固定窗口限流器（线程安全），用于接口级限流
 type Limiter struct {
-	mu       sync.Mutex
-	limit    int
-	window   time.Duration
-	hits     map[string]*windowBucket
-	stop     chan struct{}
+	mu     sync.Mutex
+	limit  int
+	window time.Duration
+	hits   map[string]*windowBucket
+	stop   chan struct{}
 }
 
 type windowBucket struct {

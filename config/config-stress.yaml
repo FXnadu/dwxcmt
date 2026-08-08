@@ -1,5 +1,5 @@
 # dwxComment 压测专用配置（不参与生产；数据库与端口均独立隔离）
-# 用法: light-comment.exe -config config/config-stress.yaml
+# 用法: dwx-comment.exe -config config/config-stress.yaml
 server:
   port: 8080
   mode: release            # release 关闭请求日志，贴近生产（压测主要观测内存）
@@ -34,7 +34,7 @@ rate_limit:
   comments_per_day: 1000
 
 comment:
-  content_max_length: 1000
+  content_max_length: 500
   nick_max_length: 20
   max_pinned_per_page: 3
   max_reply_depth: 3
