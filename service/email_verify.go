@@ -227,7 +227,8 @@ func (s *Service) LoginByEmail(email, code string) (string, int64, error) {
 		return "", 0, err
 	}
 	if admin == nil {
-		return "", 0, newValidationErr(utils.CodeErrEmailNotBound)
+		// 与验证码错误返回相同文案，避免通过错误差异枚举已绑定管理员的邮箱
+		return "", 0, newValidationErr(utils.CodeErrEmailCodeInvalid)
 	}
 	// 审批 / 禁用检查
 	if err := s.RequireAdminActive(admin); err != nil {

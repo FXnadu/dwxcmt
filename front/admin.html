@@ -166,8 +166,8 @@
     transform: translateY(-0.12em);
   }
 
-  .btn-primary { background: var(--surface); color: var(--silver); }
-  .btn-primary:hover { background: var(--surface-strong); color: var(--ice); }
+  .btn-primary { background: #1f1f1f; color: #fff; }
+  .btn-primary:hover { background: #3a3a3a; color: #fff; }
   .btn-ok { background: var(--ok-bg); color: var(--ok-text); }
   .btn-ok:hover { background: rgba(22, 163, 74, 0.22); color: var(--ok-text); }
   .btn-warn { background: var(--warn-bg); color: var(--warn-text); }
@@ -452,6 +452,10 @@
   .cmt-reply-box textarea { min-height: 72px; font-size: 0.85rem; }
   .cmt-reply-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
   .cmt-reply-box .cmt-reply-target { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+  .cmt-emoji-bar { position: relative; margin-top: 8px; display: flex; }
+  .cmt-emoji-panel { position: absolute; bottom: calc(100% + 6px); left: 0; display: none; flex-wrap: wrap; gap: 2px; width: 252px; max-height: 168px; overflow: auto; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-strong); z-index: 20; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+  .cmt-emoji-panel button { padding: 4px; font-size: 1.15rem; line-height: 1; border: none; background: transparent; cursor: pointer; border-radius: 4px; }
+  .cmt-emoji-panel button:hover { background: rgba(128,128,128,.18); }
 
   .pager { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 24px; color: var(--muted); font-size: 0.75rem; }
   .pager .btn { height: 2.2rem; padding: 0 0.85rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
@@ -541,7 +545,7 @@
     <div class="login-intro">
       <div class="login-brand">
         <svg class="logo-dwx" viewBox="0 0 100 30" fill="none" aria-hidden="true">
-          <path d="M22 3 L22 26 M22 8 C13 8 6 12 6 16 C6 20 13 24 22 24" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
+          <path d="M22 -6 L22 27 M22 8 C13 8 6 12 6 16 C6 20 13 24 22 24" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
           <path d="M32 8 L38 26 L43 13 L48 26 L54 8" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
           <path d="M64 8 L90 26 M68 26 L86 8" stroke="currentColor" stroke-width="5" stroke-linecap="butt" stroke-linejoin="miter"/>
         </svg>
@@ -1147,6 +1151,7 @@
   /* ===== 站点 ===== */
   function switchSite() {
     state.site = $('siteSel').value;
+    updateTopbar();
     state.pendingPage = 1; state.allPage = 1; state.passedPage = 1; state.spamPage = 1; state.repliedPage = 1;
     clearSel();
     if (state.tab === 'pending') loadPending(1);
@@ -1158,21 +1163,44 @@
     else if (state.tab === 'profile') loadProfile();
     else if (state.tab === 'accounts') loadAccounts();
   }
-  // 动态加载站点列表，重建下拉选项并同步自定义下拉框
+  // 站点名缓存（site 标识 → siteName），供下拉框与顶栏展示
+  var siteNames = {};
+  // 顶栏标题：显示当前站点名（未配置站点名时保持产品名）
+  function updateTopbar() {
+    var h1 = document.querySelector('.topbar h1');
+    var name = siteNames[state.site] || '';
+    if (h1) h1.textContent = name ? 'dwxCM · ' + name : 'dwxCM';
+  }
+  // 动态加载站点列表，重建下拉选项并同步自定义下拉框；
+  // 同时拉取各站点 siteName，让下拉框与顶栏显示实际站点名
   function loadSites() {
     api('GET', '/api/v1/admin/sites').then(function (res) {
       if (res.code !== 0) { toast(res.msg || '加载站点列表失败', false); return; }
       var sites = res.data.sites || [];
       var sel = $('siteSel');
       sel.innerHTML = '';
-      for (var i = 0; i < sites.length; i++) {
-        var opt = document.createElement('option');
-        opt.value = sites[i];
-        opt.text = '站点：' + sites[i];
-        if (sites[i] === state.site) opt.selected = true;
-        sel.appendChild(opt);
+      var pending = sites.length;
+      function applySites() {
+        for (var i = 0; i < sites.length; i++) {
+          var opt = document.createElement('option');
+          opt.value = sites[i];
+          opt.text = '站点：' + (siteNames[sites[i]] || sites[i]);
+          if (sites[i] === state.site) opt.selected = true;
+          sel.appendChild(opt);
+        }
+        if (sel.refreshCustomSelect) sel.refreshCustomSelect();
+        updateTopbar();
       }
-      if (sel.refreshCustomSelect) sel.refreshCustomSelect();
+      if (pending === 0) { applySites(); return; }
+      for (var i = 0; i < sites.length; i++) {
+        (function (site) {
+          api('GET', '/api/v1/admin/settings?site=' + encodeURIComponent(site)).then(function (r) {
+            if (r.code === 0 && r.data && r.data.siteName) siteNames[site] = r.data.siteName;
+          }).catch(function () {}).then(function () {
+            if (--pending === 0) applySites();
+          });
+        })(sites[i]);
+      }
     });
   }
 
@@ -1600,6 +1628,9 @@
     }
   });
 
+  /* 后台回复可选用的常用表情（与前台组件一致，插入到回复内容） */
+  var REPLY_EMOJIS = ['😀', '😄', '😁', '😊', '🙂', '😉', '😍', '🤗', '🤔', '😅', '😂', '😭', '😢', '😡', '😠', '😬', '🥺', '😌', '😏', '😎', '🥳', '🙃', '😴', '👍', '👎', '👏', '🙏', '💪', '❤️', '💔', '💕', '✨', '🎉', '🎊', '🔥', '💯', '⭐', '👀', '🤝', '🍀'];
+
   /* ===== 站长回复：展开/收起回复框 ===== */
   function toggleReplyBox(btn, id) {
     var card = btn.closest('.card');
@@ -1610,11 +1641,19 @@
       return;
     }
     var nick = btn.getAttribute('data-nick') || '';
+    var emojis = '';
+    for (var i = 0; i < REPLY_EMOJIS.length; i++) {
+      emojis += '<button type="button" data-emoji="' + REPLY_EMOJIS[i] + '">' + REPLY_EMOJIS[i] + '</button>';
+    }
     var boxEl = document.createElement('div');
     boxEl.className = 'cmt-reply-box';
     boxEl.innerHTML =
       '<div class="cmt-reply-target">以站长身份回复 @' + esc(nick) + '（回复将直接展示在前台）</div>' +
       '<textarea maxlength="1000" placeholder="回复内容（1~1000 字）"></textarea>' +
+      '<div class="cmt-emoji-bar">' +
+        '<button type="button" class="btn btn-sm" data-emoji-toggle><i class="fa-regular fa-face-smile icon-left"></i>表情</button>' +
+        '<div class="cmt-emoji-panel">' + emojis + '</div>' +
+      '</div>' +
       '<div class="cmt-reply-actions">' +
         '<button class="btn btn-sm" data-r-cancel="' + id + '"><i class="fa-solid fa-xmark"></i>取消</button>' +
         '<button class="btn btn-sm btn-ok" data-r-submit="' + id + '"><i class="fa-solid fa-reply"></i>回复</button>' +
@@ -1625,6 +1664,36 @@
 
   /* ===== 站长回复：提交 / 取消（事件委托） ===== */
   document.addEventListener('click', function (e) {
+    // 表情面板：逻辑与前台评论组件一致——按钮点击开/关，点击面板外部关闭
+    var emojiToggle = e.target.closest('button[data-emoji-toggle]');
+    if (emojiToggle) {
+      var panel = emojiToggle.parentNode.querySelector('.cmt-emoji-panel');
+      if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+        e.stopPropagation();
+      }
+      return;
+    }
+    var emojiBtn = e.target.closest('button[data-emoji]');
+    if (emojiBtn) {
+      var box = emojiBtn.closest('.cmt-reply-box');
+      var ta = box ? box.querySelector('textarea') : null;
+      if (ta) {
+        var emoji = emojiBtn.getAttribute('data-emoji');
+        var start = ta.selectionStart || ta.value.length;
+        ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(ta.selectionEnd || start);
+        ta.focus();
+        var pos = start + emoji.length;
+        ta.selectionStart = ta.selectionEnd = pos;
+      }
+      e.stopPropagation();
+      return;
+    }
+    // 点击面板外部：关闭所有已打开的表情面板
+    var allPanels = document.querySelectorAll('.cmt-emoji-panel');
+    for (var i = 0; i < allPanels.length; i++) {
+      if (!allPanels[i].contains(e.target)) allPanels[i].style.display = 'none';
+    }
     var submitBtn = e.target.closest('button[data-r-submit]');
     var cancelBtn = e.target.closest('button[data-r-cancel]');
     if (cancelBtn) {
@@ -1672,6 +1741,8 @@
       if (res.code !== 0) { toast(res.msg || '加载设置失败', false); return; }
       var d = res.data;
       state.adminBadge = d.adminBadge || '站长';
+      siteNames[state.site] = d.siteName || '';
+      updateTopbar();
       $('setSiteName').value = d.siteName || '';
       $('setNoticeEmail').value = d.noticeEmail || '';
       $('setAdminNick').value = d.adminNick || '';
@@ -1696,6 +1767,9 @@
     api('PUT', '/api/v1/admin/settings?site=' + encodeURIComponent(state.site), body).then(function (res) {
       if (res.code !== 0) { toast(res.msg || '保存失败', false); return; }
       state.adminBadge = res.data.adminBadge || '站长';
+      siteNames[state.site] = res.data.siteName || '';
+      updateTopbar();
+      loadSites();
       toast('设置已保存', true);
     });
   }

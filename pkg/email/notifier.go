@@ -153,7 +153,7 @@ func newCommentBody(siteName string, c *model.Comment) string {
 		b.WriteString(fmt.Sprintf("邮箱：%s\n", c.Email))
 	}
 	b.WriteString(fmt.Sprintf("页面：%s\n", c.PageID))
-	b.WriteString(fmt.Sprintf("时间：%s\n", time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04:05")))
+	b.WriteString(fmt.Sprintf("时间：%s\n", time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04")))
 	b.WriteString("内容：\n")
 	b.WriteString(c.Content + "\n")
 	return b.String()
@@ -165,7 +165,7 @@ func replyBody(siteName string, c *model.Comment, parent *model.Comment) string 
 	b.WriteString(fmt.Sprintf("您在 %s 的评论收到了回复：\n\n", siteName))
 	b.WriteString("您的评论：\n" + parent.Content + "\n\n")
 	b.WriteString(fmt.Sprintf("回复者：%s\n", c.Nick))
-	b.WriteString(fmt.Sprintf("时间：%s\n", time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04:05")))
+	b.WriteString(fmt.Sprintf("时间：%s\n", time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04")))
 	b.WriteString("回复内容：\n")
 	b.WriteString(c.Content + "\n")
 	return b.String()

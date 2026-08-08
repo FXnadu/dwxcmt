@@ -1,8 +1,17 @@
 /*!
  * dwxComment 评论组件 v0.1.0
  * 原生 ES5 实现，零框架依赖。嵌入方式：
+ *   <!-- 方式 1：手动指定页面 ID -->
  *   <div data-page-id="/post/hello.html" data-server="https://api.example.com"></div>
+ *
+ *   <!-- 方式 2：自动识别当前路径（推荐模板统一引入） -->
+ *   <div id="light-comment" data-server="https://api.example.com"></div>
+ *   <script>
+ *     window.LightComment = { server: 'https://api.example.com', site: 'default' };
+ *   </script>
+ *
  *   <script src="/comment/comment.js" defer></script>
+ *   <link rel="stylesheet" href="/comment/comment.css">
  */
 (function (window, document) {
   'use strict';
@@ -48,6 +57,11 @@
 
   function trim(str) {
     return str == null ? '' : String(str).replace(/^\s+|\s+$/g, '');
+  }
+
+  // 当容器未指定 data-page-id 时，默认使用当前页面路径作为评论分组标识
+  function getPageId() {
+    return window.location ? window.location.pathname : '';
   }
 
   function formatTime(ts) {
@@ -139,7 +153,8 @@
 
   function LightComment(el) {
     this.el = el;
-    this.pageId = el.getAttribute('data-page-id') || '';
+    // 优先级：容器 data-page-id > 当前页面路径 > 空
+    this.pageId = trim(el.getAttribute('data-page-id')) || getPageId();
     this.cfg = extend(extend({}, DEFAULTS), window.LightComment || {});
     // 容器 data-* 优先级最高
     var attrMap = {
@@ -167,7 +182,7 @@
   LightComment.prototype.build = function () {
     var self = this;
     if (!this.pageId) {
-      this.el.innerHTML = '<p class="lc-error">错误：缺少 data-page-id 属性</p>';
+      this.el.innerHTML = '<p class="lc-error">错误：无法确定页面标识，请填写 data-page-id 属性</p>';
       return;
     }
     var html =

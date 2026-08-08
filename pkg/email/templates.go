@@ -57,7 +57,7 @@ func renderNewCommentHTML(siteName string, c *model.Comment) (string, error) {
 		Nick:       c.Nick,
 		Email:      c.Email,
 		PageID:     c.PageID,
-		CreateTime: time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04:05"),
+		CreateTime: time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04"),
 		Content:    c.Content,
 	}
 	if err := newCommentTpl.Execute(&buf, data); err != nil {
@@ -73,7 +73,7 @@ func renderReplyHTML(siteName string, c *model.Comment, parent *model.Comment) (
 		SiteName:      siteName,
 		ParentContent: parent.Content,
 		Nick:          c.Nick,
-		CreateTime:    time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04:05"),
+		CreateTime:    time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04"),
 		Content:       c.Content,
 	}
 	if err := replyTpl.Execute(&buf, data); err != nil {

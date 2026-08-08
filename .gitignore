@@ -15,11 +15,16 @@ comment-e2e.db-shm
 
 # 本地配置文件（含敏感密钥，不入库，按需分发）
 config/config.yaml
+/config.yaml
+
+# 部署凭据（SSH 私钥等，不入库）
+.deploy/
 
 # 编译产物
 light-comment
 light-comment.exe
 light-comment-test.exe
+light-comment-linux
 
 # 前端构建
 node_modules/

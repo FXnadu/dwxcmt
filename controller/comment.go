@@ -19,7 +19,8 @@ func NewComment(svc *service.Service) *CommentController {
 }
 
 // Version 服务版本（健康检查返回）
-const Version = "0.1.0"
+// 默认 dev；发布时通过 go build -ldflags "-X dwxcmt/controller.Version=vX.Y.Z" 注入
+var Version = "dev"
 
 // Health GET /api/v1/health
 func (c *CommentController) Health(w http.ResponseWriter, r *http.Request) {
