@@ -26,6 +26,9 @@ dwx-comment
 dwx-comment.exe
 dwx-comment-test.exe
 dwx-comment-linux
+light-comment
+light-comment.exe
+light-comment-linux
 
 # 前端构建
 node_modules/
