@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>技术架构 — dwxComment</title>
+<meta name="description" content="dwxComment 的技术架构：技术选型、四层架构、请求流转流程、核心模块设计、安全设计与 ADR 关键决策。">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <span class="dwx">dwx</span>Comment<span class="dot" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">总览</a></li>
+      <li><a href="background.html">背景</a></li>
+      <li><a href="design.html">理念</a></li>
+      <li><a href="architecture.html" class="active" aria-current="page">架构</a></li>
+      <li><a href="features.html">功能</a></li>
+      <li><a href="visual.html">视觉规范</a></li>
+      <li><a href="implementation.html">制作流程</a></li>
+      <li><a href="results.html">成果</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="展开菜单" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="container container-narrow">
+  <div class="page-head">
+    <h1>Architecture</h1>
+    <p class="lead">拒绝冗余中间件，优先选择无额外运行时、依赖少、性能强、生态成熟的技术。</p>
+  </div>
+</header>
+
+<main class="container container-narrow">
+
+  <!-- 技术选型 -->
+  <section class="section reveal" id="stack">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>技术选型</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>层级</th><th>技术选型</th><th>选型说明</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>后端语言</td><td>Go 1.22+</td><td>编译型语言，标准库功能完备，协程高并发，内存占用极低</td></tr>
+          <tr><td>后端框架</td><td>Go 标准库 <code class="code">net/http</code></td><td>零第三方依赖，路由与中间件足够，符合「拒绝冗余」原则</td></tr>
+          <tr><td>数据库</td><td>SQLite 3（modernc.org/sqlite）</td><td>嵌入式文件数据库，纯 Go 实现，零 CGO，交叉编译无忧</td></tr>
+          <tr><td>前端</td><td>原生 HTML + CSS + JS（ES5）</td><td>简单打包合并压缩，零运行时框架，打包后 ≤ 25KB</td></tr>
+          <tr><td>前端构建</td><td>esbuild</td><td>毫秒级构建，仅做打包与压缩</td></tr>
+          <tr><td>反向代理</td><td>Nginx</td><td>静态资源托管、SSL 终止、第一层限流、API 转发</td></tr>
+          <tr><td>进程托管</td><td>systemd</td><td>开机自启、崩溃自动重启，无需 PM2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn" style="margin-top:16px;">
+      <span class="co-title">明确拒绝引入的组件</span>
+      Redis（自研 LRU 内存缓存）、消息队列（协程 + channel）、Vite / Webpack（原生三件套）、MySQL / MongoDB（SQLite 单文件）、Node.js 运行时（Go 单二进制）、用户登录注册体系（评论者零门槛）。
+    </div>
+  </section>
+
+  <!-- 分层架构 -->
+  <section class="section reveal" id="layers">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>系统分层架构</h2>
+    </div>
+    <div class="layer-stack">
+      <div class="layer">
+        <div class="ly-name">前端展示层 <span class="ly-tag">Browser</span></div>
+        <div class="ly-desc">原生 JS 评论组件（嵌入宿主页面）：渲染评论 / 提交交互 / 表情选择 / 头像展示</div>
+      </div>
+      <div class="layer-arrow">▼ HTTPS</div>
+      <div class="layer">
+        <div class="ly-name">反向代理层 <span class="ly-tag">Nginx</span></div>
+        <div class="ly-desc">静态资源托管 / SSL 终止 / 第一层限流 / API 转发（127.0.0.1:8080）</div>
+      </div>
+      <div class="layer-arrow">▼</div>
+      <div class="layer">
+        <div class="ly-name">业务服务层 <span class="ly-tag">Go Backend</span></div>
+        <div class="ly-desc">评论增删改查 / 鉴权 / 审核 / 限流 / 反垃圾 / 异步通知 / 数据迁移</div>
+      </div>
+      <div class="layer-arrow">▼ 本地文件</div>
+      <div class="layer">
+        <div class="ly-name">数据存储层 <span class="ly-tag">SQLite</span></div>
+        <div class="ly-desc">评论 / 管理员 / 系统配置 / 限流记录 / 点赞记录 / 迁移版本（无网络交互）</div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:16px;">
+      <span class="co-title">职责边界</span>
+      各层职责单一，仅通过约定接口 / 协议交互；前端不感知后端实现，后端不感知前端渲染；数据库仅由业务服务层访问。
+    </div>
+  </section>
+
+  <!-- 请求流转 -->
+  <section class="section reveal" id="flow">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>请求流转流程</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>读路径：评论列表查询</h3>
+        <pre style="margin:0;"><code>用户访问页面
+  → 加载 /comment/* 静态资源（Nginx 强缓存 7d）
+  → 前端 GET /api/v1/comments?pageId=xxx&amp;site=default
+    → Nginx 限流检查 → 转发 Go 后端
+      → 查内存缓存（key: site:page_id:page:pageSize）
+        → 命中 → 直接返回
+        → 未命中 → 查 SQLite（is_audited=1 + 复合索引）
+          → 写缓存 → 返回</code></pre>
+      </div>
+      <div class="card">
+        <h3>写路径：评论提交</h3>
+        <pre style="margin:0;"><code>用户提交评论
+  → 前端 POST /api/v1/comment
+    → Nginx 全局限流（limit_req）
+    → Go 参数校验（昵称/内容/邮箱/URL 格式）
+    → 敏感词检查（命中 → is_audited=-1）
+      + 频率检查 + 重复内容检查
+    → 写 SQLite（is_audited=0 待审，事务）
+    → 返回「已提交，审核通过后显示」
+    → 异步协程：通知管理员 / 缓存失效</code></pre>
+      </div>
+      <div class="card">
+        <h3>审核路径：管理员审核</h3>
+        <pre style="margin:0;"><code>管理员审核通过
+  → PUT /api/v1/admin/comment/:id/audit
+    → JWT 鉴权中间件校验
+    → UPDATE comments SET is_audited=1
+    → 清除对应文章所有缓存分页
+    → 公众可见</code></pre>
+      </div>
+      <div class="card">
+        <h3>管理员登录</h3>
+        <pre style="margin:0;"><code>POST /api/v1/admin/register（首个用户，仅一次）
+POST /api/v1/admin/login（失败不锁定，仅限流）
+  → 校验 bcrypt → 签发 JWT（24h）
+携带 Authorization: Bearer &lt;token&gt; 调用管理接口
+  → JWT 鉴权 + 登出黑名单校验
+POST /api/v1/admin/logout → token 入内存黑名单</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心模块 -->
+  <section class="section reveal" id="modules">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>后端核心模块</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:130px;">模块</th><th>实现</th><th>要点</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>路由模块</td><td><code class="code">http.ServeMux</code></td><td>API 版本前缀 <code class="code">/api/v1/</code>；公共中间件链：Recovery → Logger → CORS → 全局限流</td></tr>
+          <tr><td>缓存模块（LRU）</td><td><code class="code">map + list + RWMutex</code></td><td>默认 512 条、TTL 60s；key 为 <code class="code">site:page_id:page:pageSize</code>；审核 / 删除时主动失效对应文章全部缓存分页</td></tr>
+          <tr><td>限流模块（双层）</td><td>Nginx + Go 滑动窗口</td><td>全局 10r/s + burst；Go 层单 IP ≤ 5 req/s；评论提交单 IP ≤ 20 条/日；登录 ≤ 5 次/分钟</td></tr>
+          <tr><td>反垃圾审核</td><td>全量审核 + 敏感词</td><td>所有评论默认待审；内嵌百级基础敏感词库，命中自动标记垃圾但仍进待审列表供人工复核</td></tr>
+          <tr><td>异步任务</td><td>协程 + channel</td><td>带缓冲队列（容量 100）：邮件通知、缓存清理、点赞记录清理（24h）、限流记录清理（30 天）</td></tr>
+          <tr><td>邮件通知</td><td>标准库 net/smtp</td><td>新评论待审通知管理员、回复通知被回复者；未配置 SMTP 时静默跳过；失败自动重试 2 次</td></tr>
+          <tr><td>多站点</td><td>请求参数 <code class="code">site</code></td><td>默认 <code class="code">default</code>；缓存 key 含 site 避免污染；管理员可按站点筛选管理</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 安全设计 -->
+  <section class="section reveal" id="security">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>安全设计</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>输入安全</h3>
+        <ul class="feat-list" style="list-style:none;margin-top:10px;">
+          <li><span class="fl-icon">✓</span><div>全部 SQL 参数化查询（prepared statement），杜绝注入</div></li>
+          <li><span class="fl-icon">✓</span><div>内容二次校验：长度、格式、特殊字符过滤</div></li>
+          <li><span class="fl-icon">✓</span><div>前端渲染全部转义（textContent），图片先转义再正则替换</div></li>
+          <li><span class="fl-icon">✓</span><div>禁止 <code class="code">&lt;script&gt;</code> / <code class="code">&lt;iframe&gt;</code> 等标签</div></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>接口安全</h3>
+        <ul class="feat-list" style="list-style:none;margin-top:10px;">
+          <li><span class="fl-icon">✓</span><div>管理接口 JWT 鉴权（Authorization Header，不用 Cookie，免疫 CSRF）</div></li>
+          <li><span class="fl-icon">✓</span><div>登出 token 入内存黑名单，重启后依赖 24h 自然过期</div></li>
+          <li><span class="fl-icon">✓</span><div>登录失败不做账号锁定，仅依赖接口限流</div></li>
+          <li><span class="fl-icon">✓</span><div>错误信息不泄露堆栈与数据库路径</div></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>内容安全</h3>
+        <ul class="feat-list" style="list-style:none;margin-top:10px;">
+          <li><span class="fl-icon">✓</span><div>本地敏感词库，命中自动标记垃圾（is_audited=-1）</div></li>
+          <li><span class="fl-icon">✓</span><div>全量人工审核为最后防线（不可回退）</div></li>
+          <li><span class="fl-icon">✓</span><div>垃圾评论前台不展示，管理员可在后台查看</div></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>账号安全</h3>
+        <ul class="feat-list" style="list-style:none;margin-top:10px;">
+          <li><span class="fl-icon">✓</span><div>密码 bcrypt 哈希（cost ≥ 12），长度 ≥ 8 位含数字字母</div></li>
+          <li><span class="fl-icon">✓</span><div>首个注册用户自动成为管理员，之后关闭注册</div></li>
+          <li><span class="fl-icon">✓</span><div>两步验证（TOTP）+ QQ / GitHub / 邮箱验证码多通道登录</div></li>
+          <li><span class="fl-icon">✓</span><div>IP 伪造防护：服务端从右向左取第一个非可信 IP</div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADR -->
+  <section class="section reveal" id="adr">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>关键技术决策记录（ADR）</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:70px;">编号</th><th>决策</th><th>理由</th><th>备选方案（已否决）</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ADR-01</td><td>SQLite 用 modernc.org/sqlite（纯 Go）</td><td>零 CGO 交叉编译</td><td>mattn/go-sqlite3（需 CGO）</td></tr>
+          <tr><td>ADR-02</td><td>内存缓存用 map + RWMutex 自研 LRU</td><td>无额外依赖</td><td>Redis</td></tr>
+          <tr><td>ADR-03</td><td>前端原生 JS + esbuild 打包</td><td>零运行时依赖，构建仅做合并压缩</td><td>Vue / React</td></tr>
+          <tr><td>ADR-04</td><td>异步任务用协程 + channel</td><td>队列容量 100 已覆盖</td><td>消息队列</td></tr>
+          <tr><td>ADR-05</td><td>后端两层返回：根评论分页 + 子评论全量</td><td>减少后端复杂度，前端拼树</td><td>后端树形递归</td></tr>
+          <tr><td>ADR-06</td><td>多站点用请求参数 site</td><td>防 X-Site-Id 伪造</td><td>Nginx 头透传</td></tr>
+          <tr><td>ADR-07</td><td>全量人工审核</td><td>产品决策，安全优先</td><td>自动通过 + 可选审核</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <nav class="pager" aria-label="上下篇">
+    <a href="design.html">
+      <span class="pg-label">Prev</span>
+      <span class="pg-title">← 设计理念</span>
+    </a>
+    <a class="next" href="features.html">
+      <span class="pg-label">Next</span>
+      <span class="pg-title">功能模块说明 →</span>
+    </a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="f-inner">
+    dwxComment 项目介绍文档 · 基于 Go + SQLite + 原生 JS · 文档版本 v3.0
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" type="button" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>

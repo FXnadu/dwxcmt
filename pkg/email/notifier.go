@@ -15,6 +15,7 @@ import (
 // 由注入方（业务层）从完整站点配置适配而来，避免本包反向依赖 service 层。
 type SiteSettings struct {
 	SiteName    string
+	SiteURL     string
 	NoticeEmail string
 	NotifyNew   bool
 	NotifyReply bool
@@ -115,9 +116,10 @@ func (n *Notifier) NotifyReply(c *model.Comment, parent *model.Comment) {
 		return
 	}
 	siteName := displayName(settings.SiteName)
+	link := pageLink(settings.SiteURL, c.PageID, c.ID)
 	subject := fmt.Sprintf("【%s】有人回复了你的评论", siteName)
-	textBody := replyBody(siteName, c, parent)
-	htmlBody, err := renderReplyHTML(siteName, c, parent)
+	textBody := replyBody(siteName, link, c, parent)
+	htmlBody, err := renderReplyHTML(siteName, link, c, parent)
 	if err != nil {
 		log.Printf("[email] 渲染回复 HTML 模板失败: %v", err)
 		htmlBody = ""
@@ -144,6 +146,24 @@ func displayName(siteName string) string {
 	return strings.TrimSpace(siteName)
 }
 
+// pageLink 拼接评论页完整链接并带评论锚点（#comment-{id}）；
+// siteURL 为空时返回空串（邮件不显示链接）；commentID 为 0 时不追加锚点。
+func pageLink(siteURL, pageID string, commentID int64) string {
+	siteURL = strings.TrimSpace(siteURL)
+	if siteURL == "" {
+		return ""
+	}
+	base := strings.TrimRight(siteURL, "/")
+	pageID = strings.Trim(strings.TrimSpace(pageID), "/")
+	if pageID != "" {
+		base += "/" + pageID
+	}
+	if commentID > 0 {
+		base += fmt.Sprintf("#comment-%d", commentID)
+	}
+	return base
+}
+
 // newCommentBody 新评论通知正文
 func newCommentBody(siteName string, c *model.Comment) string {
 	var b strings.Builder
@@ -160,7 +180,7 @@ func newCommentBody(siteName string, c *model.Comment) string {
 }
 
 // replyBody 回复通知正文
-func replyBody(siteName string, c *model.Comment, parent *model.Comment) string {
+func replyBody(siteName, link string, c *model.Comment, parent *model.Comment) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf("您在 %s 的评论收到了回复：\n\n", siteName))
 	b.WriteString("您的评论：\n" + parent.Content + "\n\n")
@@ -168,5 +188,8 @@ func replyBody(siteName string, c *model.Comment, parent *model.Comment) string 
 	b.WriteString(fmt.Sprintf("时间：%s\n", time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04")))
 	b.WriteString("回复内容：\n")
 	b.WriteString(c.Content + "\n")
+	if link != "" {
+		b.WriteString("\n前往查看完整评论：\n" + link + "\n")
+	}
 	return b.String()
 }

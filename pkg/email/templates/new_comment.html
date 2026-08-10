@@ -31,19 +31,11 @@
       padding: 20px 24px;
       border-bottom: 1px solid rgba(36, 38, 43, 0.1);
     }
-    .brand {
-      font-family: "Space Grotesk", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-      font-size: 16px;
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      color: #70687a;
-      margin: 0;
-    }
     .title {
       font-size: 18px;
       font-weight: 400;
       color: #24262b;
-      margin: 8px 0 0;
+      margin: 0;
     }
     .body {
       padding: 24px;
@@ -65,7 +57,7 @@
     }
     .content-box {
       position: relative;
-      background: #f4f3f0;
+      background-color: #f4f3f0;
       padding: 12px 16px 8px 34px;
       border-radius: 2px;
       margin-top: 8px;
@@ -101,7 +93,6 @@
   <div class="wrap">
     <div class="card">
       <div class="header">
-        <p class="brand">dwx Comment</p>
         <h1 class="title">{{.SiteName}} 收到新评论</h1>
       </div>
       <div class="body">
@@ -129,14 +120,14 @@
 
         <div class="row">
           <div class="label">评论内容</div>
-          <div class="content-box">
+          <div class="content-box" style="background-color:#f4f3f0;">
             <div class="quote-mark">“</div>
             <p>{{.Content}}</p>
           </div>
         </div>
       </div>
       <div class="footer">
-        此邮件由 {{.SiteName}} 自动发送，请勿直接回复。
+        此邮件由系统自动发送，请勿直接回复。
       </div>
     </div>
   </div>

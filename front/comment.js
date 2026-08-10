@@ -176,7 +176,8 @@
     this.replyingTo = null; // {id, nick, rootId}
     this.loading = false;
     this.moreCount = 0;
-    this.siteConfig = { adminBadge: '站长', adminAvatar: '', adminNick: '站长', maxLength: DEFAULTS.maxLength };
+    this.isMobile = this.detectMobile(); // 移动端扁平回复渲染
+    this.siteConfig = { adminBadge: '站长', adminAvatar: '', adminNick: '站长', maxLength: DEFAULTS.maxLength, pagerType: 'more' };
 
     this.build();
   }
@@ -223,13 +224,13 @@
           '<div class="lc-emoji-panel" style="display:none"></div>' +
         '</form>' +
         '<div class="lc-list"></div>' +
-        '<div class="lc-more" style="display:none"></div>' +
+        '<div class="lc-pager" style="display:none"></div>' +
         '<div class="lc-toast" style="display:none"></div>' +
       '</div>';
     this.el.innerHTML = html;
 
     this.listEl = this.el.querySelector('.lc-list');
-    this.moreEl = this.el.querySelector('.lc-more');
+    this.pagerEl = this.el.querySelector('.lc-pager');
     this.countEl = this.el.querySelector('.lc-count');
     this.sortEl = this.el.querySelector('.lc-sort');
     this.sortBtnEl = this.el.querySelector('.lc-sort-btn');
@@ -256,7 +257,43 @@
     if (this.cfg.emojiPanel !== false && this.cfg.emojiPanel !== 'false') {
       this.buildEmojiPanel();
     }
+    this.watchBreakpoint();
     dispatch(this.el, 'lc:ready', {});
+  };
+
+  /* ========== 移动端适配（640px 以下扁平回复，对齐 B 站移动端） ========== */
+
+  dwxComment.prototype.detectMobile = function () {
+    var mql = window.matchMedia ? window.matchMedia('(max-width: 640px)') : null;
+    return !mql || mql.matches;
+  };
+
+  // 监听断点切换：跨断点时用已加载数据重渲染（不重新请求），桌面嵌套 ↔ 移动扁平互切
+  dwxComment.prototype.watchBreakpoint = function () {
+    var self = this;
+    var mql = window.matchMedia ? window.matchMedia('(max-width: 640px)') : null;
+    if (!mql) return;
+    var handler = function (e) {
+      var next = e.matches;
+      if (next !== self.isMobile) {
+        self.isMobile = next;
+        self.rerender();
+      }
+    };
+    if (mql.addEventListener) mql.addEventListener('change', handler);
+    else if (mql.addListener) mql.addListener(handler);
+  };
+
+  // 用最近一次加载的数据重渲染当前页
+  dwxComment.prototype.rerender = function () {
+    if (!this._lastData) return;
+    this.listEl.innerHTML = '';
+    // 重渲染只包含最近一页数据，同步重置累积映射与展开标记，避免与 DOM 不一致
+    this.commentById = {};
+    this._expandedForHash = false;
+    this.renderList(this._lastData.roots || [], this._lastData.children || []);
+    this.updateMoreBtn();
+    this.maybeScrollToHash();
   };
 
   // 同步自定义排序下拉的按钮文本与选项选中态
@@ -274,6 +311,12 @@
 
   // 打开排序下拉
   dwxComment.prototype.openSortMenu = function () {
+    // 与每页条数下拉互斥：同一时间只展开一个
+    if (this.sizeMenuEl && !this.sizeMenuEl.hidden) {
+      this.sizeMenuEl.hidden = true;
+      this.sizeBtnEl.setAttribute('aria-expanded', 'false');
+      this.sizeWrapEl.classList.remove('lc-open');
+    }
     this.sortMenuEl.hidden = false;
     this.sortBtnEl.setAttribute('aria-expanded', 'true');
     this.sortEl.classList.add('lc-open');
@@ -450,6 +493,8 @@
         self.siteConfig.adminBadge = res.data.adminBadge || '站长';
         self.siteConfig.adminAvatar = res.data.adminAvatar || '';
         self.siteConfig.adminNick = res.data.adminNick || '站长';
+        // 评论区翻页方式：more（加载更多）/ pages（页码分页），由后台站点设置下发
+        self.siteConfig.pagerType = (res.data.pagerType === 'pages') ? 'pages' : 'more';
         // 评论字数上限由后端配置下发，保证与 content_max_length 一致
         var maxLen = parseInt(res.data.contentMaxLength, 10);
         if (maxLen > 0) {
@@ -492,12 +537,19 @@
         self.total = res.data.total;
         self.totalPages = res.data.totalPages || 1;
         self.moreCount = self.total - self.page * self.cfg.pageSize;
-        if (page === 1) {
+        // 页码分页模式：每次切页替换列表；加载更多模式：仅首页清空
+        if (page === 1 || self.siteConfig.pagerType === 'pages') {
           self.listEl.innerHTML = '';
           self.countEl.textContent = '(' + self.total + ')';
+          // 列表整体替换时重置跨页累积的评论映射与折叠展开标记，
+          // 避免上一次排序/页面的数据残留（nick 回显、折叠判断都依赖它）
+          self.commentById = {};
+          self._expandedForHash = false;
         }
+        self._lastData = { roots: res.data.roots || [], children: res.data.children || [] };
         self.renderList(res.data.roots || [], res.data.children || []);
-        self.updateMoreBtn();
+        self.updatePager();
+        self.maybeScrollToHash();
         dispatch(self.el, 'lc:loaded', { page: page });
       },
       error: function (res) {
@@ -508,10 +560,20 @@
     });
   };
 
+  // 统一分页渲染入口：按站点配置（后台设置）分发到「加载更多」或「页码分页」
+  dwxComment.prototype.updatePager = function () {
+    this.pagerEl.innerHTML = '';
+    if (this.siteConfig.pagerType === 'pages') {
+      this.renderPagesPager();
+    } else {
+      this.updateMoreBtn();
+    }
+  };
+
   dwxComment.prototype.updateMoreBtn = function () {
     var self = this;
-    this.moreEl.innerHTML = '';
-    this.moreEl.style.display = 'none';
+    this.pagerEl.innerHTML = '';
+    this.pagerEl.style.display = 'none';
     if (this.page >= this.totalPages) return;
     var btn = document.createElement('button');
     btn.type = 'button';
@@ -520,8 +582,221 @@
     btn.addEventListener('click', function () {
       self.loadPage(self.page + 1);
     });
-    this.moreEl.appendChild(btn);
-    this.moreEl.style.display = 'block';
+    this.pagerEl.appendChild(btn);
+    this.pagerEl.style.display = 'block';
+  };
+
+  // 页码分页器：窗口化页码（首尾固定+省略号收拢，任意总页数不溢出）+ 每页条数选择 + 跳至指定页
+  dwxComment.prototype.renderPagesPager = function () {
+    var self = this;
+    var el = this.pagerEl;
+    el.style.display = 'none';
+    if (this.totalPages <= 1) return;
+    var page = this.page, total = this.totalPages;
+
+    // 页码窗口：当前页±2，首尾固定，间隔用省略号收拢；100 页也只需 7 个页码位
+    var pages = [];
+    var start = Math.max(1, page - 2), end = Math.min(total, page + 2);
+    if (start > 1) pages.push(1);
+    if (start > 2) pages.push('…');
+    for (var p = start; p <= end; p++) pages.push(p);
+    if (end < total - 1) pages.push('…');
+    if (end < total) pages.push(total);
+
+    var pagesHtml = '';
+    for (var i = 0; i < pages.length; i++) {
+      if (pages[i] === '…') {
+        pagesHtml += '<span class="lc-pager-ellipsis">…</span>';
+      } else {
+        pagesHtml += '<button type="button" class="lc-pager-btn' + (pages[i] === page ? ' active' : '') + '" data-p="' + pages[i] + '">' + pages[i] + '</button>';
+      }
+    }
+
+    // 每页条数选项：预设 10/20/50/100，容器自定义 data-page-size 不在其中时动态补充
+    var sizeOptions = [10, 20, 50, 100];
+    if (sizeOptions.indexOf(this.cfg.pageSize) === -1) sizeOptions.push(this.cfg.pageSize);
+    sizeOptions.sort(function (a, b) { return a - b; });
+    var sizeItems = '';
+    for (var si = 0; si < sizeOptions.length; si++) {
+      sizeItems += '<li role="option" data-value="' + sizeOptions[si] + '"' +
+        (sizeOptions[si] === this.cfg.pageSize ? ' aria-selected="true"' : '') +
+        ' tabindex="-1">每页' + sizeOptions[si] + '条</li>';
+    }
+
+    el.innerHTML = '<div class="lc-pager-bar">' +
+      '<div class="lc-sort lc-pager-size-wrap" aria-label="每页条数">' +
+        '<button type="button" class="lc-sort-btn lc-pager-size-btn" aria-haspopup="listbox" aria-expanded="false">' +
+          '<span class="lc-sort-label lc-pager-size-label">每页' + this.cfg.pageSize + '条</span>' +
+          '<svg class="lc-sort-arrow" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 6l4 4 4-4z"/></svg>' +
+        '</button>' +
+        '<ul class="lc-sort-menu lc-pager-size-menu" role="listbox" hidden>' + sizeItems + '</ul>' +
+      '</div>' +
+      '<div class="lc-pager-nav">' +
+        '<button type="button" class="lc-pager-btn lc-pager-prev" data-p="' + (page > 1 ? page - 1 : '') + '"' + (page <= 1 ? ' disabled' : '') + '>上一页</button>' +
+        '<div class="lc-pager-pages">' + pagesHtml + '</div>' +
+        '<button type="button" class="lc-pager-btn lc-pager-next" data-p="' + (page < total ? page + 1 : '') + '"' + (page >= total ? ' disabled' : '') + '>下一页</button>' +
+        '<span class="lc-pager-info">第 ' + page + '/' + total + ' 页</span>' +
+        '<span class="lc-pager-goto">跳至 <input type="number" class="lc-pager-input" min="1" max="' + total + '" value="' + page + '" aria-label="跳转页码"><button type="button" class="lc-pager-btn lc-pager-go">跳转</button></span>' +
+      '</div>' +
+    '</div>';
+
+    // 每页条数下拉（自定义，与排序方式同款样式）
+    this.sizeWrapEl = el.querySelector('.lc-pager-size-wrap');
+    this.sizeBtnEl = el.querySelector('.lc-pager-size-btn');
+    this.sizeLabelEl = el.querySelector('.lc-pager-size-label');
+    this.sizeMenuEl = el.querySelector('.lc-pager-size-menu');
+    var sizeWrap = this.sizeWrapEl, sizeBtn = this.sizeBtnEl, sizeMenu = this.sizeMenuEl;
+
+    // 页面内点击关闭：先移除上次渲染绑定的监听，避免重复累积
+    if (this.onDocClickForSize) {
+      document.removeEventListener('click', this.onDocClickForSize);
+    }
+    this.onDocClickForSize = function (ev) {
+      if (sizeWrap.contains(ev.target)) return;
+      if (!sizeMenu.hidden) {
+        sizeMenu.hidden = true;
+        sizeBtn.setAttribute('aria-expanded', 'false');
+        sizeWrap.classList.remove('lc-open');
+      }
+    };
+    document.addEventListener('click', this.onDocClickForSize);
+
+    function closeSizeMenu() {
+      sizeMenu.hidden = true;
+      sizeBtn.setAttribute('aria-expanded', 'false');
+      sizeWrap.classList.remove('lc-open');
+    }
+    sizeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (sizeMenu.hidden) {
+        if (self.sortMenuEl && !self.sortMenuEl.hidden) self.closeSortMenu();
+        sizeMenu.hidden = false;
+        sizeBtn.setAttribute('aria-expanded', 'true');
+        sizeWrap.classList.add('lc-open');
+      } else {
+        closeSizeMenu();
+      }
+    });
+    sizeMenu.addEventListener('click', function (e) {
+      var li = e.target.closest ? e.target.closest('li[role="option"]') : null;
+      if (!li) return;
+      var v = parseInt(li.getAttribute('data-value'), 10);
+      closeSizeMenu();
+      if (!v || v === self.cfg.pageSize) return;
+      self.cfg.pageSize = v;
+      self.loadPage(1);
+    });
+    sizeMenu.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); closeSizeMenu(); sizeBtn.focus(); }
+    });
+
+    // 页码/上一页/下一页 点击（事件委托）
+    el.onclick = function (ev) {
+      var t = ev.target;
+      if (t.tagName !== 'BUTTON' || t.disabled) return;
+      var p = parseInt(t.getAttribute('data-p'), 10);
+      if (!p || p === self.page) return;
+      self.loadPage(p);
+    };
+
+    // 跳至指定页：回车或点击跳转按钮
+    var input = el.querySelector('.lc-pager-input');
+    var goBtn = el.querySelector('.lc-pager-go');
+    function gotoPage() {
+      var v = parseInt(input.value, 10);
+      if (!v || v < 1 || v > self.totalPages || v === self.page) return;
+      self.loadPage(v);
+    }
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); gotoPage(); }
+    });
+    goBtn.addEventListener('click', gotoPage);
+
+    el.style.display = 'block';
+  };
+
+  // 邮件链接带 #comment-{id} 锚点时：滚动到目标评论并短暂高亮。
+  // 定位顺序：直接命中 → 已加载但被折叠（超过 maxDepth 展开层数 / 移动端回复收拢）则展开重试
+  // → 不在已加载页则自动继续加载后续页 → 全部加载完仍无目标则 toast 提示。
+  dwxComment.prototype.maybeScrollToHash = function () {
+    var self = this;
+    if (self.hashDone) return;
+    var m = /^#comment-(\d+)$/.exec(location.hash);
+    if (!m) return;
+    var id = m[1];
+    var el = self.listEl.querySelector('#comment-' + id);
+    if (el) {
+      self.finishHashJump(el);
+      return;
+    }
+    // 数据里已存在（该页已加载）但节点被折叠：展开折叠区后重试（每次跳转只尝试一次）。
+    // 折叠可能嵌套（展开一层后出现新的折叠按钮），循环点击直到不再有可展开的折叠区；
+    // 展开后仍找不到时不要提前 return，落到下方「翻页 / toast」分支。
+    if (self.commentById && self.commentById[String(id)] && !self._expandedForHash) {
+      self._expandedForHash = true;
+      var el2 = null;
+      for (;;) {
+        var btns = self.listEl.querySelectorAll('.lc-collapse-btn');
+        var clicked = false;
+        for (var i = 0; i < btns.length; i++) {
+          // 移动端「收起回复」按钮点击会收起已展开的回复，跳过以免误收
+          if (btns[i].textContent === '收起回复') continue;
+          btns[i].click();
+          clicked = true;
+        }
+        if (!clicked) break; // 没有更多可展开的折叠区
+        el2 = self.listEl.querySelector('#comment-' + id);
+        if (el2) break;
+      }
+      if (el2) {
+        self.finishHashJump(el2);
+        return;
+      }
+    }
+    if (self.page < self.totalPages) {
+      self.loadPage(self.page + 1);
+    } else {
+      self.hashDone = true; // 全部加载完仍无目标，可能已被删除
+      self.toast('未找到该评论', 'error');
+    }
+  };
+
+  // 锚点命中：平滑滚动到窗口垂直中间，滚动结束（scrollend）后再加高亮播放闪烁。
+  // 若在滚动前加类，CSS 动画 2s 从加类即开播，长页面下最强的开头段会在屏幕外播完，
+  // 用户滚到评论时动画已近尾声，观感像「没反应」。
+  dwxComment.prototype.finishHashJump = function (el) {
+    this.hashDone = true;
+    var currentY = window.pageYOffset || document.documentElement.scrollTop;
+    // 精确滚动到窗口垂直中间。scrollIntoView 的 block:'center' 在评论接近
+    // 文档底部时会被底部空间限制而偏移，这里手动计算目标滚动位置。
+    var targetY = el.getBoundingClientRect().top + currentY -
+      (window.innerHeight - el.offsetHeight) / 2;
+    targetY = Math.max(0, targetY);
+
+    var played = false;
+    function play() {
+      if (played) return;
+      played = true;
+      el.classList.add('lc-highlight');
+    }
+
+    // 目标已在窗口中部、无需滚动：scrollend 不会触发，直接播放
+    if (Math.abs(targetY - currentY) < 2) {
+      play();
+      return;
+    }
+
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+
+    if ('onscrollend' in document) {
+      // 滚动真正停下后才播放。兜底超时必须明显大于一次平滑滚动，
+      // 否则长页面上会抢在 scrollend 前播放，问题依旧
+      document.addEventListener('scrollend', play, { once: true });
+      setTimeout(play, 3000);
+    } else {
+      // 不支持 scrollend：固定延迟播放（总比不播强）
+      setTimeout(play, 800);
+    }
   };
 
   /* ========== 渲染 ========== */
@@ -538,8 +813,18 @@
     }
     // 父级 ID → 子评论列表（含跨页根评论）
     self.childrenMap = childrenMap;
-    // 全部评论 id → 评论，用于回复时显示被回复者昵称
-    var commentById = {};
+    // 根评论 ID → 该根下全部后代回复（后端已按时间正序，直接过滤保序）——移动端扁平渲染用
+    var rootChildren = {};
+    for (var r2 = 0; r2 < children.length; r2++) {
+      var rc = children[r2];
+      var rid = String(rc.rootId || 0);
+      if (!rootChildren[rid]) rootChildren[rid] = [];
+      rootChildren[rid].push(rc);
+    }
+    self.rootChildrenMap = rootChildren;
+    // 全部评论 id → 评论，用于回复时显示被回复者昵称；
+    // 跨页累积（翻页时合并进已有映射），供锚点定位判断「已加载但被折叠」的评论
+    var commentById = self.commentById || {};
     for (var r = 0; r < roots.length; r++) {
       commentById[String(roots[r].id)] = roots[r];
     }
@@ -557,11 +842,13 @@
     }
   };
 
-  dwxComment.prototype.createCommentNode = function (comment, depth, parentId) {
+  dwxComment.prototype.createCommentNode = function (comment, depth, parentId, isFlat) {
     var self = this;
     var wrap = document.createElement('div');
-    wrap.className = 'lc-comment';
+    wrap.className = isFlat ? 'lc-comment lc-reply-flat' : 'lc-comment';
     wrap.setAttribute('data-id', comment.id);
+    // 锚点 id：邮件链接可定位到具体评论
+    wrap.id = 'comment-' + comment.id;
 
     // 头像候选：站长头像 → 后端返回的真实头像（Gravatar/Cravatar/QQ）→ 字母头像兜底
     var avatar = document.createElement('div');
@@ -684,36 +971,88 @@
     body.appendChild(content);
     body.appendChild(actions);
 
-    // 子评论
-    var children = this.childrenMap ? this.childrenMap[String(comment.id)] : null;
-    if (children && children.length) {
-      if (depth < this.cfg.maxDepth) {
-        var childWrap = document.createElement('div');
-        childWrap.className = 'lc-children';
-        for (var i = 0; i < children.length; i++) {
-          childWrap.appendChild(this.createCommentNode(children[i], depth + 1, comment.id));
+    // 子评论：桌面端递归嵌套（maxDepth 层以上折叠）；移动端在根评论下扁平平铺（对齐 B 站移动端）
+    if (this.isMobile) {
+      if (depth === 1) {
+        var flat = this.rootChildrenMap ? this.rootChildrenMap[String(comment.id)] : null;
+        if (flat && flat.length) {
+          body.appendChild(this.buildFlatReplies(flat));
         }
-        body.appendChild(childWrap);
-      } else {
-        // 超过默认展开层数：折叠
-        var more = document.createElement('button');
-        more.type = 'button';
-        more.className = 'lc-collapse-btn';
-        more.textContent = '展开更多回复（' + children.length + '）';
-        more.addEventListener('click', function () {
+      }
+      // 移动端回复不递归，不会出现 depth > 1 的节点
+    } else {
+      var children = this.childrenMap ? this.childrenMap[String(comment.id)] : null;
+      if (children && children.length) {
+        if (depth < this.cfg.maxDepth) {
           var childWrap = document.createElement('div');
           childWrap.className = 'lc-children';
           for (var i = 0; i < children.length; i++) {
-            childWrap.appendChild(self.createCommentNode(children[i], depth + 1, comment.id));
+            childWrap.appendChild(this.createCommentNode(children[i], depth + 1, comment.id));
           }
-          body.replaceChild(childWrap, more);
-        });
-        body.appendChild(more);
+          body.appendChild(childWrap);
+        } else {
+          // 超过默认展开层数：折叠
+          var more = document.createElement('button');
+          more.type = 'button';
+          more.className = 'lc-collapse-btn';
+          more.textContent = '展开更多回复（' + children.length + '）';
+          more.addEventListener('click', function () {
+            var childWrap = document.createElement('div');
+            childWrap.className = 'lc-children';
+            for (var i = 0; i < children.length; i++) {
+              childWrap.appendChild(self.createCommentNode(children[i], depth + 1, comment.id));
+            }
+            body.replaceChild(childWrap, more);
+          });
+          body.appendChild(more);
+        }
       }
     }
 
     wrap.appendChild(avatar);
     wrap.appendChild(body);
+    return wrap;
+  };
+
+  // 移动端扁平回复列表：默认展示前 2 条，其余收进「共 N 条回复」折叠按钮
+  dwxComment.prototype.buildFlatReplies = function (flat) {
+    var self = this;
+    var PREVIEW = 2;
+    var wrap = document.createElement('div');
+    wrap.className = 'lc-children lc-children-flat';
+    var total = flat.length;
+    var shown = Math.min(PREVIEW, total);
+    for (var i = 0; i < shown; i++) {
+      wrap.appendChild(this.createCommentNode(flat[i], 2, flat[i].parentId || 0, true));
+    }
+    if (total > shown) {
+      var more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'lc-collapse-btn lc-replies-toggle';
+      var expanded = false;
+      function updateLabel() {
+        more.textContent = expanded ? '收起回复' : '共 ' + total + ' 条回复';
+      }
+      updateLabel();
+      more.addEventListener('click', function () {
+        expanded = !expanded;
+        if (expanded) {
+          // 展开：追加剩余回复（标记 lc-expanded，便于收起时精准移除）
+          for (var j = shown; j < total; j++) {
+            var n = self.createCommentNode(flat[j], 2, flat[j].parentId || 0, true);
+            n.classList.add('lc-expanded');
+            wrap.insertBefore(n, more);
+          }
+        } else {
+          var nodes = wrap.querySelectorAll('.lc-comment.lc-expanded');
+          for (var k = nodes.length - 1; k >= 0; k--) {
+            wrap.removeChild(nodes[k]);
+          }
+        }
+        updateLabel();
+      });
+      wrap.appendChild(more);
+    }
     return wrap;
   };
 
@@ -838,20 +1177,37 @@
   /* ========== 假性通过（待审核）插入 ========== */
 
   // 提交成功后本地插入评论，标记为待审核（背景加深）。
-  // 根评论按当前排序插入；回复则挂到父评论下；父评论不在当前列表时退化为列表末尾。
+  // 根评论按当前排序插入；回复则挂到父评论下（桌面挂到父节点子树 / 移动端挂到所属根的扁平回复列表）；
+  // 父评论不在当前列表时退化为列表末尾。
   dwxComment.prototype.insertPendingComment = function (comment) {
     var empty = this.listEl.querySelector('.lc-empty');
     if (empty) empty.parentNode.removeChild(empty);
 
-    var node = this.createCommentNode(comment, 1, comment.parentId || 0);
+    var node = (this.isMobile && comment.parentId)
+      ? this.createCommentNode(comment, 2, comment.parentId, true)
+      : this.createCommentNode(comment, 1, comment.parentId || 0);
     node.classList.add('lc-pending');
     node.setAttribute('title', '待审核：审核通过后对所有人可见');
 
+    var appended = false;
     var parent = null;
     if (comment.parentId) {
       parent = this.listEl.querySelector('.lc-comment[data-id="' + comment.parentId + '"]');
     }
-    if (parent) {
+    if (parent && this.isMobile) {
+      // 移动端：插入到所属根评论的扁平回复列表（折叠时显示在展开按钮前）
+      var rootEl = this.listEl.querySelector('.lc-comment[data-id="' + (comment.rootId || comment.parentId) + '"]');
+      var flatContainer = rootEl ? rootEl.querySelector('.lc-children-flat') : null;
+      if (flatContainer) {
+        var toggle = flatContainer.querySelector('.lc-replies-toggle');
+        if (toggle) {
+          flatContainer.insertBefore(node, toggle);
+        } else {
+          flatContainer.appendChild(node);
+        }
+        appended = true;
+      }
+    } else if (parent) {
       var body = parent.querySelector('.lc-body');
       var children = parent.querySelector('.lc-children');
       if (!children) {
@@ -860,10 +1216,20 @@
         body.appendChild(children);
       }
       children.appendChild(node);
-    } else if (this.sort === 'asc') {
-      this.listEl.appendChild(node);
-    } else {
-      this.listEl.insertBefore(node, this.listEl.firstChild);
+      appended = true;
+    }
+    if (!appended) {
+      if (this.sort === 'asc') {
+        // “最新”排序（最新在前）：新评论插到列表顶部；有置顶评论时排在置顶之后
+        var pinLast = null;
+        for (var i = 0; i < this.listEl.children.length; i++) {
+          if (this.listEl.children[i].querySelector('.lc-pin')) pinLast = this.listEl.children[i];
+        }
+        this.listEl.insertBefore(node, pinLast ? pinLast.nextSibling : this.listEl.firstChild);
+      } else {
+        // 倒序/热度：新评论追加到列表末尾
+        this.listEl.appendChild(node);
+      }
     }
 
     // 本地计数 +1，保持与假性展示一致（刷新后以服务端真实数据为准）

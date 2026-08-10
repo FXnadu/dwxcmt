@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视觉设计规范 — dwxComment</title>
+<meta name="description" content="dwxComment 的视觉设计规范：设计语言、色彩系统、字体排印、圆角阴影、组件规范与暗黑模式的设计令牌。">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <span class="dwx">dwx</span>Comment<span class="dot" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">总览</a></li>
+      <li><a href="background.html">背景</a></li>
+      <li><a href="design.html">理念</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="features.html">功能</a></li>
+      <li><a href="visual.html" class="active" aria-current="page">视觉规范</a></li>
+      <li><a href="implementation.html">制作流程</a></li>
+      <li><a href="results.html">成果</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="展开菜单" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="container container-narrow">
+  <div class="page-head">
+    <h1>Visual</h1>
+    <p class="lead">设计语言：低饱和紫灰、几何小圆角、玻璃态表面、轻量字体 —— 与「极致轻量」的产品理念一脉相承。</p>
+  </div>
+</header>
+
+<main class="container container-narrow">
+
+  <!-- 设计语言 -->
+  <section class="section reveal" id="language">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>设计语言</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>低饱和紫灰</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">主色取自紫灰中性调（ice #70687a / violet #6e627a），沉静不抢眼，长时间阅读舒适。</p>
+      </div>
+      <div class="card">
+        <h3>几何小圆角</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">统一 2px 圆角，克制而利落；按钮、卡片、输入框、徽章保持同一半径，形成一致的几何语言。</p>
+      </div>
+      <div class="card">
+        <h3>玻璃态表面</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">半透明白色表面 + backdrop-filter 毛玻璃，层次细腻、轻盈通透；暗黑模式中透明度进一步降低。</p>
+      </div>
+      <div class="card">
+        <h3>轻量字体</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">正文 Inter 300 字重 + 标题 Space Grotesk，正文 14px、行高 1.7，克制留白，聚焦内容。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 色彩系统 -->
+  <section class="section reveal" id="color">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>色彩系统</h2>
+    </div>
+
+    <h3 style="margin-bottom:10px;">浅色主题</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="sw-color" style="background:#efeeeb;"></div><div class="sw-info"><span class="sw-name">背景 bg</span><span class="sw-hex">#efeeeb</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#24262b;"></div><div class="sw-info"><span class="sw-name">文字 text</span><span class="sw-hex">#24262b</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#70687a;"></div><div class="sw-info"><span class="sw-name">冰灰 ice</span><span class="sw-hex">#70687a</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#6e627a;"></div><div class="sw-info"><span class="sw-name">紫罗兰 violet</span><span class="sw-hex">#6e627a</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#166534;"></div><div class="sw-info"><span class="sw-name">成功 ok</span><span class="sw-hex">#166534</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#92400e;"></div><div class="sw-info"><span class="sw-name">警告 warn</span><span class="sw-hex">#92400e</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#991b1b;"></div><div class="sw-info"><span class="sw-name">危险 danger</span><span class="sw-hex">#991b1b</span></div></div>
+    </div>
+
+    <h3 style="margin:24px 0 10px;">暗黑主题</h3>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="sw-color" style="background:#030305;"></div><div class="sw-info"><span class="sw-name">背景 bg</span><span class="sw-hex">#030305</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#fffce1;"></div><div class="sw-info"><span class="sw-name">文字 text</span><span class="sw-hex">rgb(255,252,225)</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#c4b8ce;"></div><div class="sw-info"><span class="sw-name">冰灰 ice</span><span class="sw-hex">#c4b8ce</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#b8a8c8;"></div><div class="sw-info"><span class="sw-name">紫罗兰 violet</span><span class="sw-hex">#b8a8c8</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#86efac;"></div><div class="sw-info"><span class="sw-name">成功 ok</span><span class="sw-hex">#86efac</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#fbbf24;"></div><div class="sw-info"><span class="sw-name">警告 warn</span><span class="sw-hex">#fbbf24</span></div></div>
+      <div class="swatch"><div class="sw-color" style="background:#fca5a5;"></div><div class="sw-info"><span class="sw-name">危险 danger</span><span class="sw-hex">#fca5a5</span></div></div>
+    </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <span class="co-title">暗黑模式切换机制</span>
+      所有颜色走 CSS 变量，禁止硬编码。<code class="code">prefers-color-scheme</code> 自动适配 + 容器 <code class="code">data-theme="light|dark"</code> 手动覆盖（评论组件），文档站支持三态切换（跟随系统 / 浅色 / 深色）。
+    </div>
+  </section>
+
+  <!-- 字体与排印 -->
+  <section class="section reveal" id="type">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>字体与排印</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>标题字体 Space Grotesk</h3>
+        <p style="font-family:var(--font-display);font-size:1.6rem;letter-spacing:-0.02em;margin:6px 0;">Aa 标题文字</p>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">英文展示型字体，几何感强，用于标题与数字；字重 300~500，字间距 -0.02em。</p>
+      </div>
+      <div class="card">
+        <h3>正文字体 Inter</h3>
+        <p style="font-size:1.1rem;margin:6px 0;">Aa 正文内容文字</p>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">正文 14px / 行高 1.7 / 字重 300，中文回退 PingFang SC、Microsoft YaHei。</p>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr><th>令牌</th><th>值</th><th>用途</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code class="code">--font-display</code></td><td>Space Grotesk, Inter, sans-serif</td><td>标题、品牌、数字</td></tr>
+          <tr><td><code class="code">--font-body</code></td><td>Inter, PingFang SC, Microsoft YaHei</td><td>正文、表单、按钮</td></tr>
+          <tr><td>正文尺寸</td><td>14px</td><td>界面基准字号</td></tr>
+          <tr><td>行高</td><td>1.7</td><td>中文阅读舒适度</td></tr>
+          <tr><td>字重</td><td>300（常规）/ 400 / 500</td><td>轻量视觉基调</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 圆角 / 阴影 / 间距 -->
+  <section class="section reveal" id="shape">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>圆角、阴影与间距</h2>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>圆角</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;"><code class="code">--radius: 2px</code><br>几何小圆角贯穿所有组件；标签采用 999px 胶囊圆角作为唯一例外。</p>
+      </div>
+      <div class="card">
+        <h3>阴影</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">双层柔和阴影：<code class="code">0 1px 2px rgba(36,38,43,.04), 0 2px 8px rgba(36,38,43,.06)</code>，暗色下加深。</p>
+      </div>
+      <div class="card">
+        <h3>间距</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">卡片内边距 1.5rem，网格间距 16px，页面顶部 40px + 底部 80px，留白克制。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 组件规范 -->
+  <section class="section reveal" id="components">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>组件规范</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>按钮</h3>
+        <p style="margin:8px 0;">
+          <button type="button" class="icon-btn" style="width:auto;padding:0.55rem 1rem;border-radius:2px;" disabled>主要操作</button>
+          <span style="display:inline-block;width:10px;"></span>
+          <span class="badge badge-ok">已通过</span>
+          <span class="badge badge-warn">待审核</span>
+          <span class="badge badge-danger">垃圾</span>
+          <span class="badge">站长</span>
+        </p>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">inline-flex 居中、gap 0.45em；hover 提亮背景 + 文字转 ice 色；禁用态透明度 0.5。状态徽章使用低饱和底色 + 深色文字 + 同色边框。</p>
+      </div>
+      <div class="card">
+        <h3>表单</h3>
+        <p style="color:var(--muted);font-size:0.82rem;margin:8px 0 0;">
+          输入框全宽、内边距 0.75rem 1rem、2px 圆角、surface 底；focus 时边框变 border-hover、背景提亮为 surface-strong。textarea 允许垂直拉伸，占位符使用 muted 色。
+        </p>
+      </div>
+      <div class="card">
+        <h3>评论卡片</h3>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">评论头：字母头像（昵称哈希 + 随机色）或真实头像 → 昵称 → 站长徽章 → 时间 → 操作；内容区先转义后渲染，图片懒加载；根评论置顶优先排序。</p>
+      </div>
+      <div class="card">
+        <h3>图标</h3>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">统一 inline-flex + 定高 1em 居中，垂直对齐 middle，与文字基线对齐；按钮内图标 0.95em。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CSS 变量 -->
+  <section class="section reveal" id="tokens">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>设计令牌（CSS 变量）</h2>
+    </div>
+    <pre><code><span class="c">/* 浅色 / 暗色双主题同源设计令牌 */</span>
+:root {
+  --bg: #efeeeb;                  <span class="c">/* 页面背景 */</span>
+  --surface: rgba(255,255,255,.65); <span class="c">/* 卡片表面（玻璃态） */</span>
+  --surface-strong: rgba(255,255,255,.85);
+  --text: #24262b;                <span class="c">/* 主文字 */</span>
+  --muted: rgba(36,38,43,.62);    <span class="c">/* 次要文字 */</span>
+  --border: rgba(36,38,43,.1);    <span class="c">/* 边框 */</span>
+  --border-hover: rgba(36,38,43,.22);
+  --ice: #70687a;                 <span class="c">/* 品牌冰灰 */</span>
+  --violet: #6e627a;              <span class="c">/* 品牌紫罗兰 */</span>
+  --radius: 2px;                  <span class="c">/* 几何小圆角 */</span>
+  --shadow: 0 1px 2px rgba(36,38,43,.04), 0 2px 8px rgba(36,38,43,.06);
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}</code></pre>
+    <div class="callout">
+      <span class="co-title">自定义主题</span>
+      用户只需覆盖 <code class="code">.lc-wrap</code> 内的变量即可定制评论组件外观；所有组件颜色均走变量，禁止硬编码。
+    </div>
+  </section>
+
+  <nav class="pager" aria-label="上下篇">
+    <a href="features.html">
+      <span class="pg-label">Prev</span>
+      <span class="pg-title">← 功能模块说明</span>
+    </a>
+    <a class="next" href="implementation.html">
+      <span class="pg-label">Next</span>
+      <span class="pg-title">制作流程与实现步骤 →</span>
+    </a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="f-inner">
+    dwxComment 项目介绍文档 · 基于 Go + SQLite + 原生 JS · 文档版本 v3.0
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" type="button" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -135,5 +135,6 @@ func (c *CommentController) SiteConfig(w http.ResponseWriter, r *http.Request) {
 		"adminAvatar":      st.AdminAvatar,
 		"adminNick":        st.AdminNick,
 		"contentMaxLength": c.svc.Cfg.Comment.ContentMaxLength,
+		"pagerType":        st.PagerType,
 	})
 }

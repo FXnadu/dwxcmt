@@ -167,6 +167,14 @@
   background: var(--lc-pending-bg);
   border-color: var(--lc-pending-border);
 }
+/* 锚点跳转高亮：邮件链接定位到评论后短暂闪烁提示 */
+@keyframes lc-highlight-flash {
+  0% { background-color: rgba(217, 119, 6, 0.22); border-color: rgba(217, 119, 6, 0.5); }
+  100% { background-color: var(--lc-surface); border-color: var(--lc-border); }
+}
+.lc-comment.lc-highlight {
+  animation: lc-highlight-flash 2s ease-out;
+}
 .lc-avatar { flex: 0 0 auto; width: 44px; height: 44px; }
 .lc-avatar-img {
   width: 44px;
@@ -237,8 +245,113 @@ a.lc-nick:hover { color: var(--lc-accent); }
 }
 .lc-collapse-btn:hover { color: var(--lc-accent); background: var(--lc-surface-strong); border-color: var(--lc-border-hover); }
 
-/* 加载更多 */
-.lc-more { text-align: center; padding: 8px 0; }
+/* 分页区域：加载更多按钮 / 页码分页器 */
+.lc-pager { text-align: center; padding: 8px 0; }
+
+/* 页码分页栏：每页条数选择 + 页码导航 + 跳至指定页 */
+.lc-pager-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* 每页条数下拉：复用排序下拉组件样式；菜单向下弹出，与排序下拉一致 */
+.lc-pager-size-wrap .lc-sort-btn { height: 32px; padding: 0 10px; }
+
+.lc-pager-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lc-pager-pages { display: flex; align-items: center; gap: 4px; }
+
+/* 分页按钮：低饱和紫灰、2px 圆角、数字等宽对齐 */
+.lc-pager-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--lc-text-2);
+  background: var(--lc-surface-strong);
+  border: 1px solid var(--lc-border);
+  border-radius: var(--lc-radius);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.lc-pager-btn:hover:not(:disabled):not(.active) {
+  color: var(--lc-accent);
+  background: var(--lc-hover);
+  border-color: var(--lc-border-hover);
+}
+.lc-pager-btn.active {
+  color: var(--lc-accent-text);
+  background: var(--lc-accent);
+  border-color: var(--lc-accent);
+  cursor: default;
+}
+.lc-pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 省略号：仅占位提示，非可点击 */
+.lc-pager-ellipsis {
+  padding: 0 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--lc-text-2);
+  user-select: none;
+}
+
+/* 页码信息：第 X/Y 页 */
+.lc-pager-info {
+  font-size: 12px;
+  color: var(--lc-text-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 跳至指定页：输入框 + 跳转按钮 */
+.lc-pager-goto {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--lc-text-2);
+  white-space: nowrap;
+}
+.lc-pager-input {
+  width: 46px;
+  height: 32px;
+  padding: 0 6px;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--lc-text);
+  background: var(--lc-surface-strong);
+  border: 1px solid var(--lc-border);
+  border-radius: var(--lc-radius);
+  transition: border-color 0.15s ease;
+}
+.lc-pager-input:focus { outline: none; border-color: var(--lc-border-hover); }
+/* 去掉 number 输入框的步进箭头，保持紧凑 */
+.lc-pager-input::-webkit-outer-spin-button,
+.lc-pager-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.lc-pager-input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+
+/* 移动端：按钮与间距收窄，导航允许换行 */
+@media (max-width: 480px) {
+  .lc-pager-bar { gap: 8px; }
+  .lc-pager-btn { min-width: 30px; height: 30px; padding: 0 8px; }
+  .lc-pager-prev, .lc-pager-next { padding: 0 8px; }
+  .lc-pager-goto { margin-top: 2px; }
+}
 
 /* 通用按钮 */
 .lc-btn {
@@ -307,4 +420,50 @@ a.lc-nick:hover { color: var(--lc-accent); }
   .lc-actions button { font-size: 12px; padding: 4px 8px; }
   .lc-form-foot { flex-wrap: wrap; }
   .lc-toolbar { flex: none; }
+}
+
+/* 移动端适配（<=640px）：回复不再递归嵌套，改为扁平回复列表（对齐 B 站移动端）。
+ * JS 在断点内只把回复平铺到根评论下（见 buildFlatReplies），此处负责去掉缩进/卡片化，
+ * 使多级回复在视觉上保持平铺不产生样式错乱。
+ */
+@media (max-width: 640px) {
+  .lc-children-flat {
+    margin-top: 12px;
+    padding: 4px 12px;
+    border-left: none;
+    background: var(--lc-hover);
+    border-radius: var(--lc-radius);
+  }
+  .lc-children-flat .lc-comment {
+    margin-bottom: 0;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .lc-children-flat .lc-comment + .lc-comment {
+    border-top: 1px solid var(--lc-border);
+  }
+  /* 待审核回复在扁平列表中仍保留标识背景 */
+  .lc-children-flat .lc-comment.lc-pending {
+    background: var(--lc-pending-bg);
+    border: 1px solid var(--lc-pending-border);
+  }
+  /* 扁平回复行：小头像、紧凑布局 */
+  .lc-children-flat .lc-comment { gap: 10px; }
+  .lc-children-flat .lc-avatar,
+  .lc-children-flat .lc-avatar-img,
+  .lc-children-flat .lc-avatar-letter { width: 28px; height: 28px; }
+  .lc-children-flat .lc-avatar-letter { font-size: 13px; }
+  .lc-children-flat .lc-content { margin: 6px 0; }
+  .lc-replies-toggle {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 6px 10px;
+    text-align: center;
+    color: var(--lc-accent);
+  }
 }

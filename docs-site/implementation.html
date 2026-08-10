@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>制作流程与实现步骤 — dwxComment</title>
+<meta name="description" content="dwxComment 的制作流程与实现步骤：文档驱动开发方法、里程碑排期、实际提交记录、目录结构、构建发布与测试质量。">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <span class="dwx">dwx</span>Comment<span class="dot" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">总览</a></li>
+      <li><a href="background.html">背景</a></li>
+      <li><a href="design.html">理念</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="features.html">功能</a></li>
+      <li><a href="visual.html">视觉规范</a></li>
+      <li><a href="implementation.html" class="active" aria-current="page">制作流程</a></li>
+      <li><a href="results.html">成果</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="展开菜单" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="container container-narrow">
+  <div class="page-head">
+    <h1>Implementation</h1>
+    <p class="lead">文档驱动的开发方法：先写清楚「做什么」与「怎么做」，再逐层实现、测试、压测、上线。</p>
+  </div>
+</header>
+
+<main class="container container-narrow">
+
+  <!-- 开发方法 -->
+  <section class="section reveal" id="method">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>开发方法：文档驱动</h2>
+    </div>
+    <p style="font-size:0.88rem;">项目采用「先文档、后代码」的流程，任何功能先经历需求评审与设计评审，形成 7 份规格文档，再进入开发。文档即契约：</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:180px;">文档</th><th>回答的问题</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01-需求规格说明书</td><td>「做什么」：背景、定位、功能清单、20 条产品决策、验收要点</td></tr>
+          <tr><td>02-系统架构设计</td><td>「怎么设计」：选型、分层、流程、模块、安全、ADR</td></tr>
+          <tr><td>03-数据库设计文档</td><td>表结构、索引、SQLite 优化、迁移策略、数据访问模式</td></tr>
+          <tr><td>04-API 接口文档</td><td>统一响应、错误码、全部公开 / 管理接口契约</td></tr>
+          <tr><td>05-前端实现方案</td><td>组件架构、渲染规则、XSS 防护、嵌入方式、性能约束</td></tr>
+          <tr><td>06-部署运维手册</td><td>编译、systemd、Nginx、备份恢复、升级、故障排查</td></tr>
+          <tr><td>07-性能测试报告</td><td>压测方法、实测数据、内存表现、线上验证</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 里程碑 -->
+  <section class="section reveal" id="milestones">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>里程碑排期</h2>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <h3>M1 · 核心闭环</h3>
+        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
+          <li>评论增删查</li>
+          <li>全量审核</li>
+          <li>管理员登录 / 登出</li>
+          <li>基础限流</li>
+          <li>健康检查</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>M2 · 体验增强</h3>
+        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
+          <li>表情、头像、通知</li>
+          <li>点赞、暗黑模式</li>
+          <li>置顶、配置管理</li>
+          <li>站长回复</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>M3 · 扩展功能</h3>
+        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
+          <li>数据导入导出</li>
+          <li>一键备份</li>
+          <li>QQ / GitHub / 邮箱绑定</li>
+          <li>两步验证</li>
+          <li>多站点</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 实现步骤 -->
+  <section class="section reveal" id="steps">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>实际制作流程</h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <span class="st-title">需求分析与澄清</span>
+        <span class="st-desc">梳理第三方评论服务痛点，产出《需求规格说明书》；通过两轮评审修正 19 处矛盾，固化 20 条产品决策与「不做清单」。</span>
+      </li>
+      <li>
+        <span class="st-title">架构与数据库设计</span>
+        <span class="st-desc">确定技术选型（Go + SQLite + 原生 JS），定义四层架构、请求流转、模块边界；设计 6 张表、复合索引与 SQLite WAL 优化。</span>
+      </li>
+      <li>
+        <span class="st-title">搭建工程骨架</span>
+        <span class="st-desc">初始化 go.mod、main.go 入口（配置加载、安全自检、优雅退出）、config 解析、model 数据库打开与自动迁移框架。</span>
+      </li>
+      <li>
+        <span class="st-title">实现路由与中间件链</span>
+        <span class="st-desc">router 注册全部 <code class="code">/api/v1/</code> 路由；中间件链 Recovery → Logger → CORS → 全局限流；管理组挂 JWT 鉴权 + 登出黑名单。</span>
+      </li>
+      <li>
+        <span class="st-title">实现业务服务层</span>
+        <span class="st-desc">按模块迭代：评论 / 审核 / 鉴权 / 反垃圾 / 置顶 / 站点配置 / 站长回复 / 数据迁移 / 个人中心 / 账号管理，每个模块配套单元测试。</span>
+      </li>
+      <li>
+        <span class="st-title">开发前端评论组件</span>
+        <span class="st-desc">原生 ES5 实现渲染、拼树、表情面板、头像、暗黑模式、分页与表单交互；XSS 全部转义；与后台视觉语言统一。</span>
+      </li>
+      <li>
+        <span class="st-title">构建与打包</span>
+        <span class="st-desc">esbuild 打包压缩前端（≤ 25KB）；Go 交叉编译零 CGO 单二进制，通过 -ldflags 注入版本号。</span>
+      </li>
+      <li>
+        <span class="st-title">测试与压测</span>
+        <span class="st-desc">单元测试覆盖核心逻辑；hey 压测读路径 / 写路径，pprof 观测内存与 goroutine；修复压测脚本缺陷。</span>
+      </li>
+      <li>
+        <span class="st-title">部署上线与验证</span>
+        <span class="st-desc">systemd 托管 + Nginx 反代，上线 cmt.example.com 实测：TTFB、限流精确性、CORS、TLS、IP 伪造防护。</span>
+      </li>
+    </ol>
+  </section>
+
+  <!-- 提交记录 -->
+  <section class="section reveal" id="commits">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>实际提交记录</h2>
+    </div>
+    <pre><code>0c5321b feat: 优化头像加载——前端候选超时跳过，后端调整候选优先级（QQ 代理 > Cravatar > Gravatar）
+98d7dcc chore: gitignore 忽略 light-comment 编译产物
+3a7f6bd chore: gitignore 忽略 dist/ 与 config.local.yaml
+4d560c5 feat: 评论字数上限调整为 500 并前后端联动，QQ 头像改服务端代理脱敏
+245216c feat: 评论头像支持 Gravatar/Cravatar/QQ 邮箱真实头像
+236c538 feat: 完善评论与邮件通知功能，补充部署与性能测试文档
+0d9f632 chore: 初始提交，托管 dwxComment 评论系统源码</code></pre>
+    <p style="font-size:0.82rem;color:var(--muted);">开发节奏：核心功能（评论 + 邮件通知）→ 部署与性能文档 → 头像体系迭代（真实头像候选 → 服务端代理脱敏 → 超时优化）→ 前后端联动调优。</p>
+  </section>
+
+  <!-- 目录结构 -->
+  <section class="section reveal" id="structure">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>项目目录结构</h2>
+    </div>
+    <pre><code>dwxcmt/
+├── main.go                 <span class="c"># 入口：配置、安全自检、优雅退出、pprof 观测</span>
+├── config/                 <span class="c"># 配置加载与解析（含压测专用配置）</span>
+├── router/                 <span class="c"># 路由注册与中间件链组装</span>
+├── controller/             <span class="c"># HTTP 层：公开 / 管理 / 设置 / 置顶 / 迁移 / 个人中心</span>
+├── service/                <span class="c"># 业务逻辑：评论 / 审核 / 鉴权 / 反垃圾 / 权限 / 两步验证</span>
+├── model/                  <span class="c"># 数据模型与 SQLite 初始化</span>
+├── middleware/             <span class="c"># auth / cors / logger / ratelimit / recovery</span>
+├── pkg/                    <span class="c"># cache(LRU) / email(SMTP) / sensitive(词库) / utils</span>
+├── migration/              <span class="c"># 9 个版本化迁移脚本（embed 打包）</span>
+├── front/                  <span class="c"># 评论组件 + 管理后台（原生 HTML/CSS/JS）</span>
+├── scripts/                <span class="c"># 压测（stress）/ 监控（monitor）/ 演示数据（seed）</span>
+└── docs/                   <span class="c"># 7 份规格文档</span></code></pre>
+    <div class="callout">
+      <span class="co-title">依赖方向</span>
+      <code class="code">main → router → controller → service → model</code>，<code class="code">pkg/*</code> 被各层引用，禁止反向依赖。
+    </div>
+  </section>
+
+  <!-- 构建发布 -->
+  <section class="section reveal" id="build">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>构建与发布</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>前端打包（esbuild）</h3>
+        <pre style="margin:8px 0 0;"><code>"build": "esbuild front/comment.js --minify --outfile=front/comment.min.js &amp;&amp; esbuild front/comment.css --minify --outfile=front/comment.min.css"</code></pre>
+      </div>
+      <div class="card">
+        <h3>后端交叉编译（零 CGO）</h3>
+        <pre style="margin:8px 0 0;"><code><span class="c"># Linux amd64 / arm64，版本号注入健康检查</span>
+GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X dwxcmt/controller.Version=v1.0.0" -o dwx-comment main.go</code></pre>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr><th>环节</th><th>方式</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>部署</td><td>复制二进制 + config.yaml + front/ + migration/ 到 /opt/dwx-comment</td></tr>
+          <tr><td>托管</td><td>systemd 服务：Restart=always、优雅退出 30s、开机自启</td></tr>
+          <tr><td>反向代理</td><td>Nginx：静态资源强缓存 7d、/api/ 转发 + 限流 10r/s burst 10</td></tr>
+          <tr><td>升级</td><td>备份 → 替换二进制 + 迁移脚本 → 重启（自动执行数据库迁移）→ 健康检查验证</td></tr>
+          <tr><td>备份</td><td>WAL checkpoint 后拷贝 comment.db，或管理接口全量导出 / 一键备份</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 测试质量 -->
+  <section class="section reveal" id="quality">
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <h2>测试与质量保障</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>单元测试</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">覆盖评论、回复、审核、反垃圾、两步验证、邮件通知（mock SMTP）、限流、工具函数等核心路径，随模块迭代同步编写。</p>
+      </div>
+      <div class="card">
+        <h3>性能压测</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">hey 并发压测读 / 写路径，pprof 观测内存与 goroutine；压测配置独立隔离（stress.db），不污染生产数据。</p>
+      </div>
+      <div class="card">
+        <h3>线上验证</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">真实部署后验证限流精确性、CORS 白名单、TLS、IP 伪造防护、静态缓存等安全与运维项。</p>
+      </div>
+      <div class="card">
+        <h3>安全测试</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">CORS 未白名单拦截、X-Forwarded-For 伪造无效、错误信息不泄露内部细节。</p>
+      </div>
+    </div>
+  </section>
+
+  <nav class="pager" aria-label="上下篇">
+    <a href="visual.html">
+      <span class="pg-label">Prev</span>
+      <span class="pg-title">← 视觉设计规范</span>
+    </a>
+    <a class="next" href="results.html">
+      <span class="pg-label">Next</span>
+      <span class="pg-title">项目成果展示 →</span>
+    </a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="f-inner">
+    dwxComment 项目介绍文档 · 基于 Go + SQLite + 原生 JS · 文档版本 v3.0
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" type="button" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+# 自动处理换行符：提交时统一转 LF，检出时按平台决定
+* text=auto
+
+# 代码文件强制使用 LF（跨平台一致性）
+*.go     text eol=lf
+*.js     text eol=lf
+*.css    text eol=lf
+*.html   text eol=lf
+*.sql    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.mod    text eol=lf
+*.sum    text eol=lf
+*.tmpl   text eol=lf
+*.njk    text eol=lf
+
+# 二进制文件不参与换行符转换
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.pdf    binary

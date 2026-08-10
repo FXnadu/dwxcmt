@@ -279,17 +279,19 @@ func (s *Service) ListComments(pageID, site string, page, pageSize int, sort str
 	if pageSize > 50 {
 		pageSize = 50
 	}
-	orderSQL := "is_pinned DESC, create_time ASC"
+	// 排序语义：asc（前端“最新”，默认）→ 最新在前；desc（“倒序”）→ 最旧在前；hot → 按热度
+	orderSQL := "is_pinned DESC, create_time DESC"
 	switch sort {
 	case "desc":
-		orderSQL = "is_pinned DESC, create_time DESC"
+		orderSQL = "is_pinned DESC, create_time ASC"
 	case "hot":
 		orderSQL = "is_pinned DESC, like_count DESC, create_time DESC"
 	default:
 		sort = "asc"
 	}
 
-	cacheKey := fmt.Sprintf("%s:%s:%d:%d:%s", site, pageID, page, pageSize, sort)
+	// 排序语义 v2：asc 改为最新在前（create_time DESC），旧缓存顺序不适用，key 加版本避免误命中
+	cacheKey := fmt.Sprintf("sortv2:%s:%s:%d:%d:%s", site, pageID, page, pageSize, sort)
 	if v, ok := s.Cache.Get(cacheKey); ok {
 		if data, ok := v.([]byte); ok {
 			var result ListResult
@@ -458,9 +460,9 @@ func (s *Service) LikeComment(commentID int64, ip string) (int, error) {
 	return likeCount, nil
 }
 
-// CacheKeyPrefix 生成某文章缓存前缀（用于审核/删除时清缓存）
+// CacheKeyPrefix 生成某文章缓存前缀（用于审核/删除时清缓存），须与 ListComments 的 cacheKey 前缀一致
 func CacheKeyPrefix(site, pageID string) string {
-	return NormalizeSite(site) + ":" + pageID + ":"
+	return "sortv2:" + NormalizeSite(site) + ":" + pageID + ":"
 }
 
 // InvalidatePage 清空某文章的所有分页缓存

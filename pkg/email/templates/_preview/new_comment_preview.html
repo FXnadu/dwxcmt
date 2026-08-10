@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{.SiteName}} 有人回复了你的评论</title>
+  <title>示例站点 收到新评论</title>
   <style>
     body {
       margin: 0;
@@ -55,27 +55,6 @@
       color: #24262b;
       word-break: break-word;
     }
-    .parent-box {
-      position: relative;
-      background-color: #eae9e6;
-      padding: 12px 16px 8px 30px;
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .parent-box .quote-mark {
-      position: absolute;
-      top: 4px;
-      left: 12px;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 32px;
-      line-height: 1;
-      color: rgba(36, 38, 43, 0.12);
-    }
-    .parent-box p {
-      margin: 0;
-      color: rgba(36, 38, 43, 0.75);
-      line-height: 1.7;
-    }
     .content-box {
       position: relative;
       background-color: #f4f3f0;
@@ -97,23 +76,6 @@
       margin: 0;
       line-height: 1.7;
     }
-    .divider {
-      height: 1px;
-      background: rgba(36, 38, 43, 0.1);
-      margin: 20px 0;
-    }
-    .action {
-      margin-top: 20px;
-      text-align: center;
-    }
-    .action-btn {
-      display: inline-block;
-      color: #24262b;
-      text-decoration: none;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(36, 38, 43, 0.35);
-      padding-bottom: 2px;
-    }
     .footer {
       padding: 16px 24px;
       color: rgba(36, 38, 43, 0.62);
@@ -131,42 +93,36 @@
   <div class="wrap">
     <div class="card">
       <div class="header">
-        <h1 class="title">有人在 {{.SiteName}} 回复了你</h1>
+        <h1 class="title">示例站点 收到新评论</h1>
       </div>
       <div class="body">
         <div class="row">
-          <div class="label">你的评论</div>
-          <div class="parent-box" style="background-color:#eae9e6;">
-            <div class="quote-mark">“</div>
-            <p>{{.ParentContent}}</p>
-          </div>
+          <div class="label">评论者</div>
+          <div class="value">张三</div>
         </div>
 
-        <div class="divider"></div>
+        <div class="row">
+          <div class="label">邮箱</div>
+          <div class="value">zhangsan@example.com</div>
+        </div>
 
         <div class="row">
-          <div class="label">回复者</div>
-          <div class="value">{{.Nick}}</div>
+          <div class="label">页面</div>
+          <div class="value">/blog/eleventy-static-site</div>
         </div>
 
         <div class="row">
           <div class="label">时间</div>
-          <div class="value">{{.CreateTime}}</div>
+          <div class="value">2026-08-09 14:30</div>
         </div>
 
         <div class="row">
-          <div class="label">回复内容</div>
+          <div class="label">评论内容</div>
           <div class="content-box" style="background-color:#f4f3f0;">
-            <div class="quote-mark">“</div>
-            <p>{{.Content}}</p>
+            <div class="quote-mark">&ldquo;</div>
+            <p>写得非常好，正好解决了我搭建静态站评论系统的问题，感谢分享！</p>
           </div>
         </div>
-
-        {{if .Link}}
-        <div class="action">
-          <a class="action-btn" href="{{.Link}}">前往查看完整评论</a>
-        </div>
-        {{end}}
       </div>
       <div class="footer">
         此邮件由系统自动发送，请勿直接回复。

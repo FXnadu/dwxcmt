@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设计理念 — dwxComment</title>
+<meta name="description" content="dwxComment 的设计理念：四大核心理念、20 条产品决策记录、与 Waline / Twikoo 的差异化对比分析。">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <span class="dwx">dwx</span>Comment<span class="dot" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">总览</a></li>
+      <li><a href="background.html">背景</a></li>
+      <li><a href="design.html" class="active" aria-current="page">理念</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="features.html">功能</a></li>
+      <li><a href="visual.html">视觉规范</a></li>
+      <li><a href="implementation.html">制作流程</a></li>
+      <li><a href="results.html">成果</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="展开菜单" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="container container-narrow">
+  <div class="page-head">
+    <h1>Design</h1>
+    <p class="lead">「宁可功能收敛，不做过度设计」—— 每一项功能、每一个决策，都围绕极致轻量与数据自主展开。</p>
+  </div>
+</header>
+
+<main class="container container-narrow">
+
+  <!-- 核心理念 -->
+  <section class="section reveal" id="ideas">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>核心理念</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>零用户门槛</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">评论者无需注册、无需登录，填昵称即可发言。访客与管理员走完全不同的通道，产品复杂度因此大幅收敛。</p>
+      </div>
+      <div class="card">
+        <h3>全量审核</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">所有评论默认待审核，管理员通过后才对公众可见。审核策略统一、不可回退，这是内容安全的第一道也是最后一道防线。</p>
+      </div>
+      <div class="card">
+        <h3>发后不改</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">评论提交后用户不可编辑、不可删除，误发联系管理员处理。砍掉编辑 / 删除能力，换来的是系统与治理的简单。</p>
+      </div>
+      <div class="card">
+        <h3>极致轻量</h3>
+        <p style="color:var(--muted);font-size:0.85rem;margin:0;">宁可功能收敛，不做过度设计。任何「加分项」如果带来运行时或心智负担，都优先拒绝。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 设计原则 -->
+  <section class="section reveal" id="principles">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>设计原则</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:140px;">原则</th><th>落地方式</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>零重型依赖</strong></td><td>拒绝 Redis、消息队列、Node.js 运行时、独立数据库；内存缓存自研 LRU，异步任务用协程 + channel</td></tr>
+          <tr><td><strong>数据自主</strong></td><td>数据存本地 SQLite 单文件，提供导入（Waline / Twikoo / Disqus）导出与一键备份，随时可迁走</td></tr>
+          <tr><td><strong>安全内建</strong></td><td>全量人工审核兜底、参数化查询防注入、转义渲染防 XSS、JWT Header 鉴权免疫 CSRF、双层限流防滥用</td></tr>
+          <tr><td><strong>编译即交付</strong></td><td>纯 Go 零 CGO 交叉编译，复制一个二进制加一个配置文件即可上线</td></tr>
+          <tr><td><strong>简单优于强大</strong></td><td>明确「不做清单」，把省下的复杂度投入核心体验的打磨</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 产品决策记录 -->
+  <section class="section reveal" id="decisions">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>产品决策记录（v1 → v2，共 20 条）</h2>
+    </div>
+    <p style="font-size:0.85rem;color:var(--muted);">以下决策在需求评审阶段逐一确认，开发中不可随意更改；如需调整须更新文档并记录变更。</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:44px;">#</th><th>决策项</th><th>v2 决策</th><th>影响范围</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>审核策略</td><td>全量人工审核（默认待审）</td><td>DB 默认值、查询、前端交互</td></tr>
+          <tr><td>2</td><td>评论者门槛</td><td>零门槛，无需注册 / 登录</td><td>移除评论者认证设计</td></tr>
+          <tr><td>3</td><td>编辑 / 删除</td><td>不支持，发后不改</td><td>不提供对应接口</td></tr>
+          <tr><td>4</td><td>评论软删除</td><td>不需要，误删重发即可</td><td>仅物理删除</td></tr>
+          <tr><td>5</td><td>评论置顶</td><td>支持，每文章最多 3 条</td><td>+is_pinned 字段、pin 接口</td></tr>
+          <tr><td>6</td><td>评论图片</td><td>仅支持 Markdown 图片 URL，不做后端上传</td><td>无图床模块</td></tr>
+          <tr><td>7</td><td>举报功能</td><td>不需要</td><td>无</td></tr>
+          <tr><td>8</td><td>点赞取消</td><td>不做取消赞</td><td>无 unlike 接口</td></tr>
+          <tr><td>9</td><td>QQ 绑定</td><td>QQ 互联 OAuth（个人中心绑定）</td><td>+qq_openid 字段、回调接口</td></tr>
+          <tr><td>10</td><td>管理员登出</td><td>补齐接口 + token 黑名单</td><td>+logout 接口、内存黑名单</td></tr>
+          <tr><td>11</td><td>站点标识传递</td><td>改用请求参数 <code class="code">site</code></td><td>安全问题修正（防伪造）</td></tr>
+          <tr><td>12</td><td>树形 / 扁平返回</td><td>后端扁平（两层）+ 前端拼装</td><td>API 响应结构确定</td></tr>
+          <tr><td>13</td><td>系统配置存储</td><td>补 settings 表（key-value）</td><td>DB 新增表</td></tr>
+          <tr><td>14</td><td>点赞去重存储</td><td>补 likes 表</td><td>DB 新增表、定时清理</td></tr>
+          <tr><td>15</td><td>数据库迁移追踪</td><td>补 migration_versions 表</td><td>DB 新增表</td></tr>
+          <tr><td>16</td><td>错误码</td><td>补完整错误码表</td><td>API 规范</td></tr>
+          <tr><td>17</td><td>健康检查</td><td>补 /api/v1/health</td><td>运维</td></tr>
+          <tr><td>18</td><td>批量评论数</td><td>已取消，接口移除</td><td>无前端使用</td></tr>
+          <tr><td>19</td><td>全量评论列表</td><td>补筛选 / 搜索接口</td><td>API</td></tr>
+          <tr><td>20</td><td>优雅退出超时</td><td>最长等待 30 秒</td><td>运维稳定性</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 差异化对比 -->
+  <section class="section reveal" id="compare">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>与同类产品对比</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>功能</th><th>Waline</th><th>Twikoo</th><th>dwxComment</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>服务端运行环境</td><td>Node.js</td><td>Node.js</td><td><strong>Go 单二进制</strong></td></tr>
+          <tr><td>数据库</td><td>SQLite / MySQL / PG</td><td>MongoDB（云端）</td><td><strong>SQLite（本地单文件）</strong></td></tr>
+          <tr><td>前端构建</td><td>Vue</td><td>Vue</td><td><strong>原生 JS（ES5）</strong></td></tr>
+          <tr><td>内存占用</td><td>~80MB+</td><td>云函数按量</td><td><strong>≤ 45MB</strong></td></tr>
+          <tr><td>反垃圾</td><td>Akismet</td><td>腾讯云 / 关键词</td><td><strong>全量审核 + 本地关键词</strong></td></tr>
+          <tr><td>审核模式</td><td>可选</td><td>可选</td><td><strong>全量人工审核（不可回退）</strong></td></tr>
+          <tr><td>数据导入导出</td><td>支持</td><td>支持</td><td>支持（带过滤）</td></tr>
+          <tr><td>评论者登录</td><td>支持 OAuth</td><td>支持</td><td><strong>无，零门槛</strong></td></tr>
+          <tr><td>管理员登录</td><td>账号密码</td><td>账号密码</td><td>账号密码 + QQ / GitHub / 邮箱验证码 + 两步验证</td></tr>
+          <tr><td>图片</td><td>图片上传</td><td>图片上传</td><td>Markdown 图片 URL 直链</td></tr>
+          <tr><td>点赞</td><td>支持</td><td>支持</td><td>仅点赞，不取消（IP 24h 去重）</td></tr>
+          <tr><td>用户编辑删除</td><td>不支持</td><td>不支持</td><td>不支持</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout ok" style="margin-top:16px;">
+      <span class="co-title">差异化优势</span>
+      在不牺牲核心体验的前提下，实现最低资源开销与最简单部署，尤其适合对性能与自主可控有极致要求的技术博客。
+    </div>
+  </section>
+
+  <nav class="pager" aria-label="上下篇">
+    <a href="background.html">
+      <span class="pg-label">Prev</span>
+      <span class="pg-title">← 项目背景</span>
+    </a>
+    <a class="next" href="architecture.html">
+      <span class="pg-label">Next</span>
+      <span class="pg-title">技术架构 →</span>
+    </a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="f-inner">
+    dwxComment 项目介绍文档 · 基于 Go + SQLite + 原生 JS · 文档版本 v3.0
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" type="button" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>

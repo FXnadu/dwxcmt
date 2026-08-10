@@ -13,6 +13,7 @@ import (
 // SettingsKey 配置项 key 常量（对应 settings 表，site+key 唯一）
 const (
 	KeySiteName    = "siteName"
+	KeySiteURL     = "siteUrl"
 	KeyNoticeEmail = "noticeEmail"
 	KeyNotifyNew   = "notifyNewComment"
 	KeyNotifyReply = "notifyReply"
@@ -20,11 +21,13 @@ const (
 	KeyAdminBadge  = "adminBadge"  // 站长徽章文案，默认「站长」
 	KeyAdminAvatar = "adminAvatar" // 站长头像 URL，默认空 = 使用字母头像
 	KeyAdminNick   = "adminNick"   // 站长昵称（站长回复显示），默认「站长」
+	KeyPagerType   = "pagerType"   // 评论区翻页方式："more"（加载更多）/ "pages"（页码分页），默认 "more"
 )
 
 // Settings 全量站点配置（含默认值），与 API 文档 §3.9 字段一一对应
 type Settings struct {
 	SiteName    string `json:"siteName"`
+	SiteURL     string `json:"siteUrl"`
 	NoticeEmail string `json:"noticeEmail"`
 	NotifyNew   bool   `json:"notifyNewComment"`
 	NotifyReply bool   `json:"notifyReply"`
@@ -32,17 +35,20 @@ type Settings struct {
 	AdminBadge  string `json:"adminBadge"`
 	AdminAvatar string `json:"adminAvatar"`
 	AdminNick   string `json:"adminNick"`
+	PagerType   string `json:"pagerType"`
 }
 
 // DefaultSettings 返回默认站点配置
 func DefaultSettings() Settings {
 	return Settings{
 		SiteName:    "",
+		SiteURL:     "",
 		NotifyNew:   true,
 		NotifyReply: true,
 		AuditMode:   "all",
 		AdminBadge:  "站长",
 		AdminNick:   "站长",
+		PagerType:   "more",
 	}
 }
 
@@ -87,6 +93,8 @@ func (s *Service) GetSiteSettings(site string) (Settings, error) {
 		switch key {
 		case KeySiteName:
 			def.SiteName = value
+		case KeySiteURL:
+			def.SiteURL = value
 		case KeyNoticeEmail:
 			def.NoticeEmail = value
 		case KeyNotifyNew:
@@ -101,6 +109,8 @@ func (s *Service) GetSiteSettings(site string) (Settings, error) {
 			def.AdminAvatar = value
 		case KeyAdminNick:
 			def.AdminNick = value
+		case KeyPagerType:
+			def.PagerType = value
 		}
 	}
 	return def, rows.Err()
@@ -124,6 +134,7 @@ func (s *Service) EmailSettings(site string) (email.SiteSettings, bool) {
 	}
 	return email.SiteSettings{
 		SiteName:    st.SiteName,
+		SiteURL:     st.SiteURL,
 		NoticeEmail: st.NoticeEmail,
 		NotifyNew:   st.NotifyNew,
 		NotifyReply: st.NotifyReply,

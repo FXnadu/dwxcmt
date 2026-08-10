@@ -778,12 +778,19 @@
         <div class="card-title"><i class="fa-solid fa-sliders"></i>系统设置</div>
         <div class="form-grid">
           <div class="field"><label>站点名称</label><input type="text" id="setSiteName"></div>
+          <div class="field"><label>站点地址</label><input type="text" id="setSiteUrl" placeholder="https://example.com"></div>
           <div class="field"><label>通知邮箱</label><input type="email" id="setNoticeEmail" placeholder="admin@example.com"></div>
           <div class="field"><label>站长昵称</label><input type="text" id="setAdminNick" placeholder="站长" maxlength="20"></div>
           <div class="field"><label>站长徽章文案</label><input type="text" id="setAdminBadge" placeholder="站长" maxlength="10"></div>
           <div class="field"><label>站长头像 URL</label><input type="text" id="setAdminAvatar" placeholder="https://example.com/avatar.png"></div>
           <div class="field switch-row"><label style="margin:0"><input type="checkbox" id="setNotifyNew"> 新评论通知管理员</label></div>
           <div class="field switch-row"><label style="margin:0"><input type="checkbox" id="setNotifyReply"> 回复邮件通知</label></div>
+          <div class="field"><label>评论区翻页方式</label>
+            <select class="custom-select" id="setPagerType">
+              <option value="more" selected>加载更多</option>
+              <option value="pages">页码分页</option>
+            </select>
+          </div>
           <div class="field full"><label>审核模式（固定为全量人工审核，不可修改）</label><input type="text" id="setAuditMode" disabled></div>
         </div>
         <button class="btn btn-primary" style="margin-top:8px" onclick="saveSettings()"><i class="fa-solid fa-floppy-disk"></i>保存设置</button>
@@ -1151,6 +1158,7 @@
   /* ===== 站点 ===== */
   function switchSite() {
     state.site = $('siteSel').value;
+    state.siteUserSelected = true;
     updateTopbar();
     state.pendingPage = 1; state.allPage = 1; state.passedPage = 1; state.spamPage = 1; state.repliedPage = 1;
     clearSel();
@@ -1180,7 +1188,14 @@
       var sel = $('siteSel');
       sel.innerHTML = '';
       var pending = sites.length;
+      var autoChanged = false;
       function applySites() {
+        // 存在非 default 站点且用户未手动切换过时，默认选中第一个非 default 站点，免去每次手动切换
+        if (!state.siteUserSelected && state.site === 'default') {
+          for (var i = 0; i < sites.length; i++) {
+            if (sites[i] !== 'default') { state.site = sites[i]; autoChanged = true; break; }
+          }
+        }
         for (var i = 0; i < sites.length; i++) {
           var opt = document.createElement('option');
           opt.value = sites[i];
@@ -1190,6 +1205,8 @@
         }
         if (sel.refreshCustomSelect) sel.refreshCustomSelect();
         updateTopbar();
+        // 站点变更后重新加载当前 tab，避免展示的还是 default 站的数据
+        if (autoChanged) switchTab(state.tab);
       }
       if (pending === 0) { applySites(); return; }
       for (var i = 0; i < sites.length; i++) {
@@ -1744,12 +1761,14 @@
       siteNames[state.site] = d.siteName || '';
       updateTopbar();
       $('setSiteName').value = d.siteName || '';
+      $('setSiteUrl').value = d.siteUrl || '';
       $('setNoticeEmail').value = d.noticeEmail || '';
       $('setAdminNick').value = d.adminNick || '';
       $('setAdminBadge').value = d.adminBadge || '';
       $('setAdminAvatar').value = d.adminAvatar || '';
       $('setNotifyNew').checked = !!d.notifyNewComment;
       $('setNotifyReply').checked = !!d.notifyReply;
+      $('setPagerType').value = (d.pagerType === 'pages') ? 'pages' : 'more';
       $('setAuditMode').value = d.auditMode === 'all' ? '全量人工审核' : (d.auditMode || 'all');
       $('dataSiteName').textContent = state.site;
     });
@@ -1757,12 +1776,14 @@
   function saveSettings() {
     var body = {
       siteName: $('setSiteName').value.trim(),
+      siteUrl: $('setSiteUrl').value.trim(),
       noticeEmail: $('setNoticeEmail').value.trim(),
       adminNick: $('setAdminNick').value.trim(),
       adminBadge: $('setAdminBadge').value.trim(),
       adminAvatar: $('setAdminAvatar').value.trim(),
       notifyNewComment: $('setNotifyNew').checked,
-      notifyReply: $('setNotifyReply').checked
+      notifyReply: $('setNotifyReply').checked,
+      pagerType: $('setPagerType').value
     };
     api('PUT', '/api/v1/admin/settings?site=' + encodeURIComponent(state.site), body).then(function (res) {
       if (res.code !== 0) { toast(res.msg || '保存失败', false); return; }

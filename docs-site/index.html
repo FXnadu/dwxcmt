@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dwxComment — 极致轻量的自托管评论系统</title>
+<meta name="description" content="dwxComment 是一个基于 Go + SQLite + 原生 JS 的极致轻量自托管评论系统：单二进制、单文件数据库、纯静态前端。本文档站完整介绍其背景、设计理念、技术架构、实现流程与成果。">
+<link rel="preconnect" href="https://fonts.bunny.net">
+<link href="https://fonts.bunny.net/css?family=inter:300,400,500|space-grotesk:300,400,500" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="index.html">
+      <span class="dwx">dwx</span>Comment<span class="dot" aria-hidden="true"></span>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html" class="active" aria-current="page">总览</a></li>
+      <li><a href="background.html">背景</a></li>
+      <li><a href="design.html">理念</a></li>
+      <li><a href="architecture.html">架构</a></li>
+      <li><a href="features.html">功能</a></li>
+      <li><a href="visual.html">视觉规范</a></li>
+      <li><a href="implementation.html">制作流程</a></li>
+      <li><a href="results.html">成果</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+        </svg>
+      </button>
+      <button class="icon-btn nav-toggle" id="nav-toggle" type="button" aria-label="展开菜单" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="container container-narrow">
+  <div class="page-head">
+    <h1>Overview</h1>
+    <p class="lead">极致轻量的自托管评论系统 —— 单二进制、单文件数据库、纯静态前端，替代 Twikoo / Waline 的更轻量选择。</p>
+  </div>
+
+  <div class="tag-cloud" aria-label="技术栈">
+    <span class="tag">Go 1.22+</span>
+    <span class="tag">SQLite</span>
+    <span class="tag">原生 JavaScript (ES5)</span>
+    <span class="tag">esbuild 构建</span>
+    <span class="tag">Nginx + systemd</span>
+    <span class="tag">零 CGO</span>
+    <span class="tag">零第三方运行环境</span>
+  </div>
+</header>
+
+<main class="container container-narrow">
+
+  <!-- 核心数据 -->
+  <section class="section reveal">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="num">25<small> KB</small></div>
+        <div class="label">前端打包体积上限（gzip 后 ≤ 8KB）</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">45<small> MB</small></div>
+        <div class="label">后端内存占用上限（整机 ≤ 100MB）</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">7.9<small> 万</small></div>
+        <div class="label">本地读路径 QPS（平均延迟 ≤ 2.3ms）</div>
+      </div>
+      <div class="stat-card">
+        <div class="num">1</div>
+        <div class="label">个二进制 + 1 个数据库文件 = 整套系统</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心理念 -->
+  <section class="section reveal">
+    <div class="section-head">
+      <span class="section-num">CORE IDEAS</span>
+      <h2>核心理念</h2>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>极致轻量</h3>
+        <p style="color:var(--muted);font-size:0.85rem;">拒绝冗余中间件与重型框架。Go 单二进制 + SQLite 单文件 + 原生 JS，无 Node.js、无 Redis、无消息队列。</p>
+      </div>
+      <div class="card">
+        <h3>数据完全自主</h3>
+        <p style="color:var(--muted);font-size:0.85rem;">评论数据存放在自己的服务器本地文件，可随时导出、备份、迁移，不依赖任何第三方平台。</p>
+      </div>
+      <div class="card">
+        <h3>零用户门槛</h3>
+        <p style="color:var(--muted);font-size:0.85rem;">评论者无需注册、无需登录，填昵称即可发言；管理员与访客走完全不同的通道。</p>
+      </div>
+      <div class="card">
+        <h3>安全优先</h3>
+        <p style="color:var(--muted);font-size:0.85rem;">全量人工审核 + 本地敏感词 + 双层限流 + 参数化查询，防注入、防 XSS、防刷屏。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 一句话定位 -->
+  <section class="section reveal">
+    <div class="callout">
+      <span class="co-title">一句话定位</span>
+      替代 Twikoo、Waline 等轻量评论服务的自托管方案 —— 在不牺牲核心体验的前提下，实现最低资源开销与最简单部署，尤其适合对性能与自主可控有极致要求的技术博客。
+    </div>
+  </section>
+
+  <!-- 文档导航 -->
+  <section class="section reveal">
+    <div class="section-head">
+      <span class="section-num">DOCUMENTATION</span>
+      <h2>文档导航</h2>
+    </div>
+    <div class="grid grid-2">
+      <a class="nav-card" href="background.html">
+        <span class="nc-en">01 — Background</span>
+        <span class="nc-title">项目背景</span>
+        <span class="nc-desc">第三方评论服务的痛点、产品定位、目标用户、设计目标与适用场景范围。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="design.html">
+        <span class="nc-en">02 — Design</span>
+        <span class="nc-title">设计理念</span>
+        <span class="nc-desc">核心理念、20 条产品决策记录、与 Waline / Twikoo 的差异化对比。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="architecture.html">
+        <span class="nc-en">03 — Architecture</span>
+        <span class="nc-title">技术架构</span>
+        <span class="nc-desc">技术选型、四层架构、请求流转、核心模块、安全设计与 ADR 决策。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="features.html">
+        <span class="nc-en">04 — Features</span>
+        <span class="nc-title">功能模块说明</span>
+        <span class="nc-desc">角色定义、核心评论功能、管理功能、反垃圾审核、数据迁移与 API 一览。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="visual.html">
+        <span class="nc-en">05 — Visual</span>
+        <span class="nc-title">视觉设计规范</span>
+        <span class="nc-desc">设计语言、色彩系统、字体排印、组件规范与暗黑模式的设计令牌。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="implementation.html">
+        <span class="nc-en">06 — Implementation</span>
+        <span class="nc-title">制作流程与实现步骤</span>
+        <span class="nc-desc">文档驱动的开发方法、里程碑排期、实际提交记录、目录结构与构建发布。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <a class="nav-card" href="results.html">
+        <span class="nc-en">07 — Results</span>
+        <span class="nc-title">项目成果展示</span>
+        <span class="nc-desc">性能压测数据、线上部署实测、资源占用表现与结论建议。</span>
+        <span class="nc-more">阅读 →</span>
+      </a>
+      <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
+        <h3 style="margin-bottom:6px;">开源</h3>
+        <p style="color:var(--muted);font-size:0.82rem;margin:0;">本文档站完整描述 dwxComment 的「为什么」与「怎么做」，作为开源项目的中文介绍与设计文档。</p>
+      </div>
+    </div>
+  </section>
+
+  <nav class="pager" aria-label="下一篇">
+    <a class="next" href="background.html">
+      <span class="pg-label">Next</span>
+      <span class="pg-title">项目背景 →</span>
+    </a>
+  </nav>
+</main>
+
+<footer class="site-footer">
+  <div class="f-inner">
+    dwxComment 项目介绍文档 · 基于 Go + SQLite + 原生 JS · 文档版本 v3.0
+  </div>
+</footer>
+
+<button class="back-top" id="back-top" type="button" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
+<script src="js/main.js"></script>
+</body>
+</html>

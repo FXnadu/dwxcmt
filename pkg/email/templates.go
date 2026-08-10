@@ -43,6 +43,7 @@ type newCommentData struct {
 // replyData 回复通知 HTML 模板数据
 type replyData struct {
 	SiteName      string
+	Link          string
 	ParentContent string
 	Nick          string
 	CreateTime    string
@@ -67,10 +68,11 @@ func renderNewCommentHTML(siteName string, c *model.Comment) (string, error) {
 }
 
 // renderReplyHTML 渲染回复通知 HTML 正文
-func renderReplyHTML(siteName string, c *model.Comment, parent *model.Comment) (string, error) {
+func renderReplyHTML(siteName, link string, c *model.Comment, parent *model.Comment) (string, error) {
 	var buf bytes.Buffer
 	data := replyData{
 		SiteName:      siteName,
+		Link:          link,
 		ParentContent: parent.Content,
 		Nick:          c.Nick,
 		CreateTime:    time.Unix(c.CreateTime, 0).Format("2006-01-02 15:04"),
