@@ -279,19 +279,21 @@ func (s *Service) ListComments(pageID, site string, page, pageSize int, sort str
 	if pageSize > 50 {
 		pageSize = 50
 	}
-	// 排序语义：asc（前端“最新”，默认）→ 最新在前；desc（“倒序”）→ 最旧在前；hot → 按热度
-	orderSQL := "is_pinned DESC, create_time DESC"
+	// 排序语义：asc（前端“最新”，默认）→ 最新在前；desc（“倒序”）→ 最旧在前；hot → 按热度。
+	// 置顶区固定按 pin_time DESC（后置顶的排最上），与外部排序模式无关。
+	// 末尾追加 id 兜底：时间完全并列时顺序依然确定（同秒置顶/同秒发布不会出现随机顺序）。
+	orderSQL := "is_pinned DESC, pin_time DESC, create_time DESC, id DESC"
 	switch sort {
 	case "desc":
-		orderSQL = "is_pinned DESC, create_time ASC"
+		orderSQL = "is_pinned DESC, pin_time DESC, create_time ASC, id ASC"
 	case "hot":
-		orderSQL = "is_pinned DESC, like_count DESC, create_time DESC"
+		orderSQL = "is_pinned DESC, pin_time DESC, like_count DESC, create_time DESC, id DESC"
 	default:
 		sort = "asc"
 	}
 
-	// 排序语义 v2：asc 改为最新在前（create_time DESC），旧缓存顺序不适用，key 加版本避免误命中
-	cacheKey := fmt.Sprintf("sortv2:%s:%s:%d:%d:%s", site, pageID, page, pageSize, sort)
+	// 排序语义 v3：置顶区改为按 pin_time 倒序（v2 按 create_time，相同秒数时顺序不稳定），key 加版本避免误命中
+	cacheKey := fmt.Sprintf("sortv3:%s:%s:%d:%d:%s", site, pageID, page, pageSize, sort)
 	if v, ok := s.Cache.Get(cacheKey); ok {
 		if data, ok := v.([]byte); ok {
 			var result ListResult
@@ -462,7 +464,7 @@ func (s *Service) LikeComment(commentID int64, ip string) (int, error) {
 
 // CacheKeyPrefix 生成某文章缓存前缀（用于审核/删除时清缓存），须与 ListComments 的 cacheKey 前缀一致
 func CacheKeyPrefix(site, pageID string) string {
-	return "sortv2:" + NormalizeSite(site) + ":" + pageID + ":"
+	return "sortv3:" + NormalizeSite(site) + ":" + pageID + ":"
 }
 
 // InvalidatePage 清空某文章的所有分页缓存

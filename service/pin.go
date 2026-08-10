@@ -33,11 +33,13 @@ func (s *Service) PinComment(id int64) (int, error) {
 	// 单条原子条件 UPDATE：借助标量子查询把「计数检查 + 置顶」合并为一条语句。
 	// SQLite 单写者串行化 + 条件更新，保证并发置顶请求不会突破 MaxPinnedPerPage 上限。
 	// 注意：不能写 SELECT 1 ... HAVING COUNT(*)，无 GROUP BY 时 SQLite 视为非聚合查询直接报错。
+	// pin_time 记录本次置顶时间，置顶区按它倒序（后置顶的排最上）；取消再置顶会重新取当前时间顶到第一位。
+	now := time.Now().Unix()
 	res, err := s.DB.Exec(
-		`UPDATE comments SET is_pinned = 1, update_time = ? WHERE id = ? AND (
+		`UPDATE comments SET is_pinned = 1, pin_time = ?, update_time = ? WHERE id = ? AND (
 			SELECT COUNT(*) FROM comments
 			WHERE page_id = ? AND site = ? AND is_pinned = 1 AND parent_id = 0) < ?`,
-		time.Now().Unix(), id, c.PageID, c.Site, s.Cfg.Comment.MaxPinnedPerPage,
+		now, now, id, c.PageID, c.Site, s.Cfg.Comment.MaxPinnedPerPage,
 	)
 	if err != nil {
 		return 0, err
@@ -71,7 +73,7 @@ func (s *Service) UnpinComment(id int64) (int, error) {
 	}
 
 	if _, err := s.DB.Exec(
-		`UPDATE comments SET is_pinned = 0, update_time = ? WHERE id = ?`,
+		`UPDATE comments SET is_pinned = 0, pin_time = 0, update_time = ? WHERE id = ?`,
 		time.Now().Unix(), id,
 	); err != nil {
 		return 0, err

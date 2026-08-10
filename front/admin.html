@@ -642,12 +642,25 @@
 
     <!-- 已通过 -->
     <div id="tab-passed" style="display:none">
+      <div class="filters">
+        <input class="kw" type="text" id="fPassedKeyword" placeholder="搜索昵称或内容" onkeydown="if(event.key==='Enter')searchPassed()">
+        <button class="btn btn-sm btn-icon-only" onclick="searchPassed()" title="搜索" aria-label="搜索"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <select class="custom-select" id="fPassedSort" onchange="searchPassed()">
+          <option value="newest" selected>最新在前</option>
+          <option value="oldest">最早在前</option>
+          <option value="hot">点赞最多</option>
+        </select>
+      </div>
       <div id="passedList"></div>
       <div class="pager" id="passedPager"></div>
     </div>
 
     <!-- 垃圾评论 -->
     <div id="tab-spam" style="display:none">
+      <div class="filters">
+        <input class="kw" type="text" id="fSpamKeyword" placeholder="搜索昵称或内容" onkeydown="if(event.key==='Enter')searchSpam()">
+        <button class="btn btn-sm btn-icon-only" onclick="searchSpam()" title="搜索" aria-label="搜索"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
       <div id="spamList"></div>
       <div class="pager" id="spamPager"></div>
     </div>
@@ -657,6 +670,11 @@
       <div class="filters">
         <input class="kw" type="text" id="fKeyword" placeholder="搜索昵称或内容" onkeydown="if(event.key==='Enter')searchAll()">
         <button class="btn btn-sm btn-icon-only" onclick="searchAll()" title="搜索" aria-label="搜索"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <select class="custom-select" id="fAllSort" onchange="searchAll()">
+          <option value="newest" selected>最新在前</option>
+          <option value="oldest">最早在前</option>
+          <option value="hot">点赞最多</option>
+        </select>
       </div>
       <div id="allList"></div>
       <div class="list-bottom">
@@ -1367,6 +1385,8 @@
   // 搜索/每页条数变化会重载列表（视图变化），与分页、切 tab、切站点一致地清空已选，
   // 避免「已选 N 条」指向已不在当前视图里的评论造成误操作。
   function searchAll() { clearSel(); loadAll(1); }
+  function searchPassed() { clearSel(); loadPassed(1); }
+  function searchSpam() { clearSel(); loadSpam(1); }
   function searchReplied() { clearSel(); loadReplied(1); }
   function doBatch(action) {
     if (action === 'clear') { clearSel(); return; }
@@ -1421,7 +1441,11 @@
 
   /* ===== 已通过 ===== */
   function loadPassed(page) {
-    api('GET', '/api/v1/admin/comments?page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=1').then(function (res) {
+    var q = 'page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=1';
+    q += '&sort=' + encodeURIComponent($('fPassedSort').value || 'newest');
+    var kw = $('fPassedKeyword').value.trim();
+    if (kw) q += '&keyword=' + encodeURIComponent(kw);
+    api('GET', '/api/v1/admin/comments?' + q).then(function (res) {
       if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
       if (page > 1 && res.data.totalPages < page) { loadPassed(res.data.totalPages); return; }
       state.passedPage = page;
@@ -1440,7 +1464,10 @@
 
   /* ===== 垃圾评论 ===== */
   function loadSpam(page) {
-    api('GET', '/api/v1/admin/comments?page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=-1').then(function (res) {
+    var q = 'page=' + page + '&pageSize=10&site=' + encodeURIComponent(state.site) + '&status=-1';
+    var kw = $('fSpamKeyword').value.trim();
+    if (kw) q += '&keyword=' + encodeURIComponent(kw);
+    api('GET', '/api/v1/admin/comments?' + q).then(function (res) {
       if (res.code !== 0) { toast(res.msg || '加载失败', false); return; }
       if (page > 1 && res.data.totalPages < page) { loadSpam(res.data.totalPages); return; }
       state.spamPage = page;
@@ -1460,6 +1487,7 @@
   /* ===== 全部评论 ===== */
   function loadAll(page) {
     var q = 'page=' + page + '&pageSize=' + ($('fPageSize').value || 10) + '&site=' + encodeURIComponent(state.site);
+    q += '&sort=' + encodeURIComponent($('fAllSort').value || 'newest');
     var kw = $('fKeyword').value.trim();
     if (kw) q += '&keyword=' + encodeURIComponent(kw);
     api('GET', '/api/v1/admin/comments?' + q).then(function (res) {
@@ -2092,8 +2120,11 @@
   window.switchSite = switchSite;
   window.toggleUserMenu = toggleUserMenu;
   window.loadAll = loadAll;
+  window.loadPassed = loadPassed;
   window.loadReplied = loadReplied;
   window.searchAll = searchAll;
+  window.searchPassed = searchPassed;
+  window.searchSpam = searchSpam;
   window.searchReplied = searchReplied;
   window.saveSettings = saveSettings;
   window.changePassword = changePassword;

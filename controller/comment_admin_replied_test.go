@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"testing"
 	"time"
+
+	"dwxcmt/pkg/utils"
 )
 
 // insertRawComment 直接插入一条指定属性的评论，用于构造 mock 数据
@@ -144,6 +147,89 @@ func TestReplied_KeywordFilter(t *testing.T) {
 	}
 }
 
+// insertRawCommentAt 插入一条指定 create_time / like_count 的已审核评论，用于构造排序测试数据
+func insertRawCommentAt(t *testing.T, env *testEnv, pageID, nick, content string, createTime, likeCount int64) {
+	t.Helper()
+	_, err := env.svc.DB.Exec(
+		`INSERT INTO comments (page_id, site, nick, content, parent_id, root_id, is_audited, like_count, create_time, update_time)
+		 VALUES (?, 'default', ?, ?, 0, 0, 1, ?, ?, ?)`,
+		pageID, nick, content, likeCount, createTime, createTime,
+	)
+	if err != nil {
+		t.Fatalf("插入 mock 评论失败: %v", err)
+	}
+}
+
+// doList 带 JWT 调用 GET /api/v1/admin/comments，返回解码后的统一响应
+func doList(t *testing.T, env *testEnv, token, query string) utilsResponse {
+	t.Helper()
+	ctl := NewCommentAdmin(env.svc)
+	h := env.auth.Middleware(http.HandlerFunc(ctl.List))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/comments?"+query, nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	var resp utilsResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("响应不是合法 JSON: %v, body=%s", err, rec.Body.String())
+	}
+	return resp
+}
+
+// TestList_Sort 验证管理端列表排序：newest / oldest / hot 与非法值拒绝
+func TestList_Sort(t *testing.T) {
+	env := newTestEnv(t)
+	token := registerAndLogin(t, env)
+
+	now := time.Now().Unix()
+	// A：最早（now-300，like=1）；B：中间（now-200，like=2）；C：最新（now-100，like=5）
+	insertRawCommentAt(t, env, "/post", "A", "最早的评论", now-300, 1)
+	insertRawCommentAt(t, env, "/post", "B", "中间的评论", now-200, 2)
+	insertRawCommentAt(t, env, "/post", "C", "最新的评论", now-100, 5)
+
+	// 按昵称断言排序：newest 最新在前
+	nickOrder := func(query string) []string {
+		t.Helper()
+		resp := doList(t, env, token, query)
+		if resp.Code != 0 {
+			t.Fatalf("列表请求失败: code=%d msg=%s", resp.Code, resp.Msg)
+		}
+		var data struct {
+			List []struct {
+				Nick string `json:"nick"`
+			} `json:"list"`
+		}
+		if err := json.Unmarshal(resp.Data, &data); err != nil {
+			t.Fatalf("解析响应失败: %v", err)
+		}
+		got := make([]string, 0, len(data.List))
+		for _, it := range data.List {
+			got = append(got, it.Nick)
+		}
+		return got
+	}
+
+	if got := nickOrder("page=1&pageSize=10&site=default&sort=newest"); !reflect.DeepEqual(got, []string{"C", "B", "A"}) {
+		t.Fatalf("newest 排序应为 [C B A], got %v", got)
+	}
+	if got := nickOrder("page=1&pageSize=10&site=default&sort=oldest"); !reflect.DeepEqual(got, []string{"A", "B", "C"}) {
+		t.Fatalf("oldest 排序应为 [A B C], got %v", got)
+	}
+	if got := nickOrder("page=1&pageSize=10&site=default&sort=hot"); !reflect.DeepEqual(got, []string{"C", "B", "A"}) {
+		t.Fatalf("hot 排序应为 [C B A], got %v", got)
+	}
+
+	// 缺省 sort 等价 newest
+	if got := nickOrder("page=1&pageSize=10&site=default"); !reflect.DeepEqual(got, []string{"C", "B", "A"}) {
+		t.Fatalf("缺省排序应等同 newest [C B A], got %v", got)
+	}
+
+	// 非法 sort 值应拒绝
+	if resp := doList(t, env, token, "page=1&pageSize=10&site=default&sort=DROP"); resp.Code != utils.CodeErrInvalidParam {
+		t.Fatalf("非法 sort 应返回 CodeErrInvalidParam(%d), got code=%d", utils.CodeErrInvalidParam, resp.Code)
+	}
+}
+
 // TestReplied_Pagination 验证分页
 func TestReplied_Pagination(t *testing.T) {
 	env := newTestEnv(t)
@@ -172,5 +258,77 @@ func TestReplied_Pagination(t *testing.T) {
 	}
 	if data.Total != 5 || len(data.List) != 2 || data.TotalPages != 3 {
 		t.Fatalf("分页结果不正确: total=%d len=%d totalPages=%d", data.Total, len(data.List), data.TotalPages)
+	}
+}
+
+// TestList_PassedSearch_NoSpamMix 验证「已通过」Tab（status=1）中搜索关键词时，
+// 即使垃圾（is_audited=-1）与待审核（is_audited=0）评论命中相同关键词，也不会混入结果
+func TestList_PassedSearch_NoSpamMix(t *testing.T) {
+	env := newTestEnv(t)
+	token := registerAndLogin(t, env)
+
+	// 三条评论命中相同关键词「内部测试」，状态各不相同
+	insertRawComment(t, env, "/post", "default", "正常用户", "这是内部测试的已通过评论", 0, 0, 1, 0)  // 已通过
+	insertRawComment(t, env, "/post", "default", "垃圾用户", "这是内部测试的垃圾评论", 0, 0, -1, 0)  // 垃圾
+	insertRawComment(t, env, "/post", "default", "待审用户", "这是内部测试的待审评论", 0, 0, 0, 0)   // 待审核
+
+	resp := doList(t, env, token, "page=1&pageSize=10&site=default&status=1&keyword="+url.QueryEscape("内部测试"))
+	if resp.Code != 0 {
+		t.Fatalf("已通过列表搜索失败: code=%d msg=%s", resp.Code, resp.Msg)
+	}
+	var data struct {
+		List []struct {
+			Nick      string `json:"nick"`
+			IsAudited int    `json:"isAudited"`
+		} `json:"list"`
+		Total int `json:"total"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("解析响应失败: %v", err)
+	}
+	if data.Total != 1 {
+		t.Fatalf("已通过搜索应只命中 1 条（垃圾/待审核不得混入）, got total=%d list=%+v", data.Total, data.List)
+	}
+	if len(data.List) != 1 || data.List[0].Nick != "正常用户" {
+		t.Fatalf("应只返回已通过评论「正常用户」, got %+v", data.List)
+	}
+	if data.List[0].IsAudited != 1 {
+		t.Fatalf("返回的评论 isAudited 应为 1, got %d", data.List[0].IsAudited)
+	}
+}
+
+// TestList_SpamSearch_NoMix 验证「垃圾评论」Tab（status=-1）中搜索关键词时，
+// 即使已通过（is_audited=1）与待审核（is_audited=0）评论命中相同关键词，也不会混入结果
+func TestList_SpamSearch_NoMix(t *testing.T) {
+	env := newTestEnv(t)
+	token := registerAndLogin(t, env)
+
+	// 三条评论命中相同关键词「推广」，状态各不相同
+	insertRawComment(t, env, "/post", "default", "广告用户", "这是推广的垃圾评论", 0, 0, -1, 0) // 垃圾
+	insertRawComment(t, env, "/post", "default", "正常用户", "这是推广的正常评论", 0, 0, 1, 0)  // 已通过
+	insertRawComment(t, env, "/post", "default", "待审用户", "这是推广的待审评论", 0, 0, 0, 0)  // 待审核
+
+	resp := doList(t, env, token, "page=1&pageSize=10&site=default&status=-1&keyword="+url.QueryEscape("推广"))
+	if resp.Code != 0 {
+		t.Fatalf("垃圾评论列表搜索失败: code=%d msg=%s", resp.Code, resp.Msg)
+	}
+	var data struct {
+		List []struct {
+			Nick      string `json:"nick"`
+			IsAudited int    `json:"isAudited"`
+		} `json:"list"`
+		Total int `json:"total"`
+	}
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("解析响应失败: %v", err)
+	}
+	if data.Total != 1 {
+		t.Fatalf("垃圾评论搜索应只命中 1 条（已通过/待审核不得混入）, got total=%d list=%+v", data.Total, data.List)
+	}
+	if len(data.List) != 1 || data.List[0].Nick != "广告用户" {
+		t.Fatalf("应只返回垃圾评论「广告用户」, got %+v", data.List)
+	}
+	if data.List[0].IsAudited != -1 {
+		t.Fatalf("返回的评论 isAudited 应为 -1, got %d", data.List[0].IsAudited)
 	}
 }

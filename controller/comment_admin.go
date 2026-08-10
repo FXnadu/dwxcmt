@@ -23,11 +23,13 @@ func NewCommentAdmin(svc *service.Service) *CommentAdminController {
 // List GET /api/v1/admin/comments
 // status：0 待审 / 1 已通过 / -1 垃圾；不传 = 全部
 // keyword：昵称或内容模糊匹配；site：不传或 all = 全部站点
+// sort：newest（最新在前，默认）/ oldest（最早在前）/ hot（点赞最多）
 func (c *CommentAdminController) List(w http.ResponseWriter, r *http.Request) {
 	page := utils.QueryInt(r, "page", 1)
 	pageSize := utils.QueryInt(r, "pageSize", 10)
 	keyword := utils.QueryStr(r, "keyword", "")
 	site := utils.QueryStr(r, "site", "")
+	sort := utils.QueryStr(r, "sort", "newest")
 
 	// status 缺省为 nil（全部）；传入时必须是 0/1/-1，否则拒绝
 	var status *int
@@ -39,8 +41,13 @@ func (c *CommentAdminController) List(w http.ResponseWriter, r *http.Request) {
 		}
 		status = &n
 	}
+	// sort 缺省为 newest；传入时必须是 newest / oldest / hot，否则拒绝
+	if sort != "newest" && sort != "oldest" && sort != "hot" {
+		utils.Fail(w, utils.CodeErrInvalidParam)
+		return
+	}
 
-	comments, total, err := c.svc.ListAllComments(page, pageSize, status, keyword, site)
+	comments, total, err := c.svc.ListAllComments(page, pageSize, status, keyword, site, sort)
 	if err != nil {
 		writeErr(w, err)
 		return
@@ -60,14 +67,21 @@ func (c *CommentAdminController) List(w http.ResponseWriter, r *http.Request) {
 }
 
 // Replied GET /api/v1/admin/comments/replied
-// 筛选后台回复的评论（is_admin = 1），支持站点 / 关键词过滤
+// 筛选后台回复的评论（is_admin = 1），支持站点 / 关键词 / 排序过滤
 func (c *CommentAdminController) Replied(w http.ResponseWriter, r *http.Request) {
 	page := utils.QueryInt(r, "page", 1)
 	pageSize := utils.QueryInt(r, "pageSize", 10)
 	keyword := utils.QueryStr(r, "keyword", "")
 	site := utils.QueryStr(r, "site", "")
+	sort := utils.QueryStr(r, "sort", "newest")
 
-	comments, total, err := c.svc.ListAdminReplies(page, pageSize, keyword, site)
+	// sort 缺省为 newest；传入时必须是 newest / oldest / hot，否则拒绝
+	if sort != "newest" && sort != "oldest" && sort != "hot" {
+		utils.Fail(w, utils.CodeErrInvalidParam)
+		return
+	}
+
+	comments, total, err := c.svc.ListAdminReplies(page, pageSize, keyword, site, sort)
 	if err != nil {
 		writeErr(w, err)
 		return

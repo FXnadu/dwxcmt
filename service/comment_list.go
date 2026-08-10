@@ -6,10 +6,11 @@ import (
 	"dwxcmt/model"
 )
 
-// ListAllComments 管理端全量评论列表，支持状态 / 关键词 / 站点过滤。
-// status 为 nil 时表示全部；keyword 模糊匹配昵称或内容；site 为空或 "all" 表示全部站点。
+// ListAllComments 管理端全量评论列表，支持状态 / 关键词 / 站点 / 排序过滤。
+// status 为 nil 时表示全部；keyword 模糊匹配昵称或内容；site 为空或 "all" 表示全部站点；
+// sort 取值见 commentOrderBy，非法值回退为 newest（最新在前）。
 // 返回 (列表, 总数, error)，列表项含隐私字段（ToDTO(true)）。
-func (s *Service) ListAllComments(page, pageSize int, status *int, keyword, site string) ([]model.CommentDTO, int, error) {
+func (s *Service) ListAllComments(page, pageSize int, status *int, keyword, site, sort string) ([]model.CommentDTO, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -52,7 +53,7 @@ func (s *Service) ListAllComments(page, pageSize int, status *int, keyword, site
 		`SELECT id, page_id, site, nick, email, link, content, parent_id, root_id,
 		        like_count, is_audited, is_pinned, is_admin, ip, user_agent, create_time, update_time
 		 FROM comments `+where+`
-		 ORDER BY create_time DESC
+		 ORDER BY `+commentOrderBy(sort)+`
 		 LIMIT ? OFFSET ?`, queryArgs...,
 	)
 	if err != nil {
@@ -74,9 +75,28 @@ func (s *Service) ListAllComments(page, pageSize int, status *int, keyword, site
 	return comments, total, nil
 }
 
+// commentOrderBy 管理端列表排序字段映射：
+//   - newest（默认）：最新在前
+//   - oldest：最早在前
+//   - hot：按点赞数降序，同分时最新在前
+//
+// 末尾追加 id 兜底：create_time（秒级）完全并列时顺序依然确定，
+// 避免 LIMIT/OFFSET 分页在同秒多条评论时出现跨页重复/漏项（与公开列表 ListComments 一致）。
+// 仅接受白名单内的常量值，非法输入回退为 newest，杜绝 SQL 注入。
+func commentOrderBy(sort string) string {
+	switch sort {
+	case "oldest":
+		return "create_time ASC, id ASC"
+	case "hot":
+		return "like_count DESC, create_time DESC, id DESC"
+	default:
+		return "create_time DESC, id DESC"
+	}
+}
+
 // ListAdminReplies 管理端筛选「后台回复的评论」（is_admin = 1 的回复）。
-// 支持站点 / 关键词过滤，返回含隐私字段的 DTO。
-func (s *Service) ListAdminReplies(page, pageSize int, keyword, site string) ([]model.CommentDTO, int, error) {
+// 支持站点 / 关键词 / 排序过滤，返回含隐私字段的 DTO。
+func (s *Service) ListAdminReplies(page, pageSize int, keyword, site, sort string) ([]model.CommentDTO, int, error) {
 	if page < 1 {
 		page = 1
 	}
@@ -112,7 +132,7 @@ func (s *Service) ListAdminReplies(page, pageSize int, keyword, site string) ([]
 		`SELECT id, page_id, site, nick, email, link, content, parent_id, root_id,
 		        like_count, is_audited, is_pinned, is_admin, ip, user_agent, create_time, update_time
 		 FROM comments `+where+`
-		 ORDER BY create_time DESC
+		 ORDER BY `+commentOrderBy(sort)+`
 		 LIMIT ? OFFSET ?`, queryArgs...,
 	)
 	if err != nil {
