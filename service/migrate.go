@@ -199,7 +199,9 @@ type ImportResult struct {
 	Skipped  int `json:"skipped"`
 }
 
-// importRecord 解析后的待导入评论。导入一律 is_audited=1（管理员导入视为已信任）。
+// importRecord 解析后的待导入评论。
+// 审核状态：源格式带审核状态时（waline status / 本系统 isAudited）原样保留；
+// 未解析到状态时默认 is_audited=1（管理员导入视为已信任）。
 type importRecord struct {
 	sourceID     string // 源记录标识（用于本批次内父评论映射）
 	parentKey    string // 源父评论标识
@@ -214,6 +216,8 @@ type importRecord struct {
 	UserAgent    string
 	IsPinned     int
 	IsAdmin      int
+	IsAudited    int  // 0 待审核 / 1 已通过 / -1 垃圾
+	auditSet     bool // 是否从源数据解析到审核状态
 	LikeCount    int
 	CreateTime   int64
 	UpdateTime   int64
@@ -326,13 +330,20 @@ func (s *Service) ImportComments(source string, data []byte) (ImportResult, erro
 			ut = ct
 		}
 
+		// 审核状态：源数据带状态则原样保留（waline approved/waiting/spam、本系统 isAudited），
+		// 否则默认已通过（1）——管理员导入视为已信任
+		audited := 1
+		if rec.auditSet {
+			audited = rec.IsAudited
+		}
+
 		r, err := tx.Exec(
 			`INSERT INTO comments (page_id, site, nick, email, link, content,
 			        parent_id, root_id, like_count, is_audited, is_pinned, is_admin, ip, user_agent,
 			        create_time, update_time)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?)`,
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			rec.PageID, NormalizeSite(rec.Site), rec.Nick, rec.Email, rec.Link, rec.Content,
-			parentID, rootID, rec.LikeCount, rec.IsPinned, rec.IsAdmin, rec.IP, rec.UserAgent,
+			parentID, rootID, rec.LikeCount, audited, rec.IsPinned, rec.IsAdmin, rec.IP, rec.UserAgent,
 			ct, ut,
 		)
 		if err != nil {
@@ -352,7 +363,7 @@ func (s *Service) ImportComments(source string, data []byte) (ImportResult, erro
 		return res, err
 	}
 
-	// 新导入评论为已审核，清空相关页面缓存使其立即可见
+	// 清空相关页面缓存，使新导入评论按各自审核状态立即可见（已通过）或进入待审列表（待审核）
 	for _, rec := range records {
 		if rec.PageID != "" {
 			s.InvalidatePage(NormalizeSite(rec.Site), rec.PageID)
@@ -404,6 +415,15 @@ func parseNative(raw []map[string]interface{}) ([]importRecord, error) {
 		}
 		rec.parentKey = strField(m, "parentId")
 		rec.nativeParent = intField(m, "parentId")
+		// 回读本系统导出格式的审核状态（0 待审核 / 1 已通过 / -1 垃圾）。
+		// 仅接受合法取值；越界值（如损坏源文件的 isAudited:5）忽略并回落默认已通过（1），
+		// 避免写入既不在公开列表也不在待审队列的不可见孤儿评论。
+		if _, ok := m["isAudited"]; ok {
+			if v := int(intField(m, "isAudited")); v == 0 || v == 1 || v == -1 {
+				rec.IsAudited = v
+				rec.auditSet = true
+			}
+		}
 		records = append(records, rec)
 	}
 	return records, nil
@@ -436,6 +456,15 @@ func parseWaline(raw []map[string]interface{}) ([]importRecord, error) {
 		rec.parentKey = strField(m, "pid")
 		rec.CreateTime = firstTime(m, "insertedAt", "createdAt")
 		rec.UpdateTime = rec.CreateTime
+		// 审核状态原样保留：approved→已通过(1)、waiting→待审核(0)、spam→垃圾(-1)
+		switch strings.ToLower(strings.TrimSpace(strField(m, "status"))) {
+		case "approved":
+			rec.IsAudited, rec.auditSet = 1, true
+		case "waiting", "pending":
+			rec.IsAudited, rec.auditSet = 0, true
+		case "spam":
+			rec.IsAudited, rec.auditSet = -1, true
+		}
 		records = append(records, rec)
 	}
 	return records, nil

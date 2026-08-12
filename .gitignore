@@ -11,7 +11,14 @@ comment-e2e.db-shm
 
 # 数据库备份文件
 *.bak
+*.bak-*
 *.db.pre-acceptance.bak
+
+# 迁移调试数据目录（含 .env 密钥 / sqlite 用户数据，禁止入库）
+waline_*/
+
+# 环境变量文件（可能含 SMTP/密钥等凭据）
+.env
 
 # 本地配置文件（含敏感密钥，不入库，按需分发）
 config/config.yaml

@@ -117,10 +117,9 @@
       <span class="section-num">03</span>
       <h2>请求流转流程</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>读路径：评论列表查询</h3>
-        <pre style="margin:0;"><code>用户访问页面
+    <div class="flow">
+      <h3>读路径：评论列表查询</h3>
+      <pre><code>用户访问页面
   → 加载 /comment/* 静态资源（Nginx 强缓存 7d）
   → 前端 GET /api/v1/comments?pageId=xxx&amp;site=default
     → Nginx 限流检查 → 转发 Go 后端
@@ -128,10 +127,9 @@
         → 命中 → 直接返回
         → 未命中 → 查 SQLite（is_audited=1 + 复合索引）
           → 写缓存 → 返回</code></pre>
-      </div>
-      <div class="card">
-        <h3>写路径：评论提交</h3>
-        <pre style="margin:0;"><code>用户提交评论
+
+      <h3>写路径：评论提交</h3>
+      <pre><code>用户提交评论
   → 前端 POST /api/v1/comment
     → Nginx 全局限流（limit_req）
     → Go 参数校验（昵称/内容/邮箱/URL 格式）
@@ -140,25 +138,22 @@
     → 写 SQLite（is_audited=0 待审，事务）
     → 返回「已提交，审核通过后显示」
     → 异步协程：通知管理员 / 缓存失效</code></pre>
-      </div>
-      <div class="card">
-        <h3>审核路径：管理员审核</h3>
-        <pre style="margin:0;"><code>管理员审核通过
+
+      <h3>审核路径：管理员审核</h3>
+      <pre><code>管理员审核通过
   → PUT /api/v1/admin/comment/:id/audit
     → JWT 鉴权中间件校验
     → UPDATE comments SET is_audited=1
     → 清除对应文章所有缓存分页
     → 公众可见</code></pre>
-      </div>
-      <div class="card">
-        <h3>管理员登录</h3>
-        <pre style="margin:0;"><code>POST /api/v1/admin/register（首个用户，仅一次）
+
+      <h3>管理员登录</h3>
+      <pre><code>POST /api/v1/admin/register（首个用户，仅一次）
 POST /api/v1/admin/login（失败不锁定，仅限流）
   → 校验 bcrypt → 签发 JWT（24h）
 携带 Authorization: Bearer &lt;token&gt; 调用管理接口
   → JWT 鉴权 + 登出黑名单校验
 POST /api/v1/admin/logout → token 入内存黑名单</code></pre>
-      </div>
     </div>
   </section>
 
@@ -192,42 +187,18 @@ POST /api/v1/admin/logout → token 入内存黑名单</code></pre>
       <span class="section-num">05</span>
       <h2>安全设计</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>输入安全</h3>
-        <ul class="feat-list" style="list-style:none;margin-top:10px;">
-          <li><span class="fl-icon">✓</span><div>全部 SQL 参数化查询（prepared statement），杜绝注入</div></li>
-          <li><span class="fl-icon">✓</span><div>内容二次校验：长度、格式、特殊字符过滤</div></li>
-          <li><span class="fl-icon">✓</span><div>前端渲染全部转义（textContent），图片先转义再正则替换</div></li>
-          <li><span class="fl-icon">✓</span><div>禁止 <code class="code">&lt;script&gt;</code> / <code class="code">&lt;iframe&gt;</code> 等标签</div></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>接口安全</h3>
-        <ul class="feat-list" style="list-style:none;margin-top:10px;">
-          <li><span class="fl-icon">✓</span><div>管理接口 JWT 鉴权（Authorization Header，不用 Cookie，免疫 CSRF）</div></li>
-          <li><span class="fl-icon">✓</span><div>登出 token 入内存黑名单，重启后依赖 24h 自然过期</div></li>
-          <li><span class="fl-icon">✓</span><div>登录失败不做账号锁定，仅依赖接口限流</div></li>
-          <li><span class="fl-icon">✓</span><div>错误信息不泄露堆栈与数据库路径</div></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>内容安全</h3>
-        <ul class="feat-list" style="list-style:none;margin-top:10px;">
-          <li><span class="fl-icon">✓</span><div>本地敏感词库，命中自动标记垃圾（is_audited=-1）</div></li>
-          <li><span class="fl-icon">✓</span><div>全量人工审核为最后防线（不可回退）</div></li>
-          <li><span class="fl-icon">✓</span><div>垃圾评论前台不展示，管理员可在后台查看</div></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>账号安全</h3>
-        <ul class="feat-list" style="list-style:none;margin-top:10px;">
-          <li><span class="fl-icon">✓</span><div>密码 bcrypt 哈希（cost ≥ 12），长度 ≥ 8 位含数字字母</div></li>
-          <li><span class="fl-icon">✓</span><div>首个注册用户自动成为管理员，之后关闭注册</div></li>
-          <li><span class="fl-icon">✓</span><div>两步验证（TOTP）+ QQ / GitHub / 邮箱验证码多通道登录</div></li>
-          <li><span class="fl-icon">✓</span><div>IP 伪造防护：服务端从右向左取第一个非可信 IP</div></li>
-        </ul>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:110px;">维度</th><th>措施</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>输入安全</strong></td><td>全部 SQL 参数化查询（prepared statement），杜绝注入；内容二次校验（长度、格式、特殊字符过滤）；前端渲染全部转义（textContent），图片先转义再正则替换；禁止 <code class="code">&lt;script&gt;</code> / <code class="code">&lt;iframe&gt;</code> 等标签</td></tr>
+          <tr><td><strong>接口安全</strong></td><td>管理接口 JWT 鉴权（Authorization Header，不用 Cookie，免疫 CSRF）；登出 token 入内存黑名单，重启后依赖 24h 自然过期；登录失败不做账号锁定，仅依赖接口限流；错误信息不泄露堆栈与数据库路径</td></tr>
+          <tr><td><strong>内容安全</strong></td><td>本地敏感词库，命中自动标记垃圾（is_audited=-1）；全量人工审核为最后防线（不可回退）；垃圾评论前台不展示，管理员可在后台查看</td></tr>
+          <tr><td><strong>账号安全</strong></td><td>密码 bcrypt 哈希（cost ≥ 12），长度 ≥ 8 位含数字字母；首个注册用户自动成为管理员，之后关闭注册；两步验证（TOTP）+ QQ / GitHub / 邮箱验证码多通道登录；IP 伪造防护：服务端从右向左取第一个非可信 IP</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 

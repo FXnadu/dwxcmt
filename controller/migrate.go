@@ -68,7 +68,6 @@ func (c *MigrateController) Import(w http.ResponseWriter, r *http.Request) {
 		utils.FailMsg(w, utils.CodeErrInvalidParam, "导入文件不能超过 5MB")
 		return
 	}
-
 	res, err := c.svc.ImportComments(source, data)
 	if err != nil {
 		writeErr(w, err)

@@ -291,6 +291,20 @@ type batchAuditReq struct {
 	Status int     `json:"status"`
 }
 
+// ClearLink PUT /api/v1/admin/comment/{id}/link 清除评论的网站链接（保留评论本身，昵称不再外链）
+func (c *AdminController) ClearLink(w http.ResponseWriter, r *http.Request) {
+	id, err := service.ParseID(r.PathValue("id"))
+	if err != nil {
+		utils.Fail(w, utils.CodeErrInvalidParam)
+		return
+	}
+	if err := c.svc.ClearCommentLink(id); err != nil {
+		writeErr(w, err)
+		return
+	}
+	utils.OK(w, map[string]interface{}{"id": id})
+}
+
 // BatchAudit PUT /api/v1/admin/comments/batch-audit 批量审核：ids + status（1 通过 / -1 垃圾）
 func (c *AdminController) BatchAudit(w http.ResponseWriter, r *http.Request) {
 	var req batchAuditReq

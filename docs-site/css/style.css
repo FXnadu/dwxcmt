@@ -5,7 +5,7 @@
 
 /* ---------- 设计令牌（与 admin.html / comment.css 保持一致） ---------- */
 :root {
-  --bg: #efeeeb;
+  --bg: #ffffff;
   --surface: rgba(255, 255, 255, 0.65);
   --surface-strong: rgba(255, 255, 255, 0.85);
   --text: #24262b;
@@ -69,7 +69,7 @@
 
 /* 手动主题覆盖（js 切换） */
 html[data-theme="light"] {
-  --bg: #efeeeb;
+  --bg: #ffffff;
   --surface: rgba(255, 255, 255, 0.65);
   --surface-strong: rgba(255, 255, 255, 0.85);
   --text: #24262b;
@@ -264,73 +264,52 @@ li { margin-bottom: 0.3rem; }
   margin-bottom: 10px;
 }
 
-/* ---------- 卡片 ---------- */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: border-color .2s ease, transform .2s ease;
-}
-.card + .card { margin-top: 16px; }
-
-.grid {
+/* ---------- 定义列表（文档化排版，替代卡片网格） ---------- */
+.def-list { border-top: 1px solid var(--border); }
+.def-item {
   display: grid;
-  gap: 16px;
+  grid-template-columns: 200px 1fr;
+  gap: 10px 28px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
 }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.grid-3 { grid-template-columns: repeat(3, 1fr); }
-.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.def-item h3 { margin: 0; font-size: 0.95rem; line-height: 1.5; }
+.def-item .def-desc { color: var(--muted); font-size: 0.85rem; margin: 0; line-height: 1.7; }
+.def-item .def-desc code { font-size: 0.85em; }
+@media (max-width: 560px) {
+  .def-item { grid-template-columns: 1fr; gap: 4px; }
+}
 
-/* 首页导航卡片 */
-.nav-card {
-  display: block;
-  color: var(--text);
-  background: var(--surface);
+/* ---------- 流程块（堆叠式，替代卡片里的代码流） ---------- */
+.flow h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+.flow pre { margin-bottom: 20px; }
+
+/* ---------- 数据图表（内联 SVG） ---------- */
+.chart-block {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.25rem 1.4rem;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
-  transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
-}
-.nav-card:hover { color: var(--text); border-color: var(--border-hover); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
-.nav-card .nc-en {
-  font-family: var(--font-display);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  color: var(--ice);
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 6px;
-}
-.nav-card .nc-title { font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 6px; letter-spacing: -0.01em; }
-.nav-card .nc-desc { color: var(--muted); font-size: 0.82rem; line-height: 1.6; }
-.nav-card .nc-more { display: inline-block; margin-top: 10px; font-size: 0.78rem; color: var(--ice); }
-
-/* ---------- 数据统计卡 ---------- */
-.stat-grid { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
-.stat-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.3rem 1.4rem;
-  text-align: left;
   box-shadow: var(--shadow);
-  backdrop-filter: blur(12px);
+  padding: 18px 18px 14px;
+  margin-bottom: 16px;
 }
-.stat-card .num {
+.chart-block .chart-title {
   font-family: var(--font-display);
-  font-size: 1.7rem;
-  letter-spacing: -0.03em;
-  color: var(--text);
-  line-height: 1.2;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
 }
-.stat-card .num small { font-size: 0.9rem; color: var(--ice); font-weight: 300; }
-.stat-card .label { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+.chart-block .chart-note { color: var(--muted); font-size: 0.74rem; margin-top: 8px; line-height: 1.6; }
+.chart-block svg { display: block; width: 100%; height: auto; }
+.chart text { font-family: var(--font-body); font-size: 11px; fill: var(--muted); }
+.chart .axis { stroke: var(--border); }
+.chart .grid { stroke: var(--border); stroke-dasharray: 3 4; }
+.chart .bar { fill: var(--violet); }
+.chart .bar-hl { fill: var(--ice); }
+.chart .val { fill: var(--text); font-size: 11px; }
+.chart .tick { fill: var(--muted); font-size: 11px; }
 
 /* ---------- 表格 ---------- */
 .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); backdrop-filter: blur(12px); }
@@ -580,7 +559,6 @@ tr.hl td { background: var(--ring); }
 
 /* ---------- 响应式 ---------- */
 @media (max-width: 900px) {
-  .grid-3, .grid-4, .stat-grid { grid-template-columns: repeat(2, 1fr); }
   .nav-toggle { display: inline-flex; }
   .nav-links {
     position: fixed;
@@ -602,7 +580,6 @@ tr.hl td { background: var(--ring); }
 }
 
 @media (max-width: 560px) {
-  .grid-2, .grid-3, .grid-4, .stat-grid { grid-template-columns: 1fr; }
   body { padding-top: 54px; }
   .nav-inner { height: 54px; }
   .nav-links { top: 54px; }

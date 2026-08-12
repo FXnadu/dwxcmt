@@ -81,36 +81,17 @@
       <span class="section-num">02</span>
       <h2>里程碑排期</h2>
     </div>
-    <div class="grid grid-3">
-      <div class="card">
-        <h3>M1 · 核心闭环</h3>
-        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
-          <li>评论增删查</li>
-          <li>全量审核</li>
-          <li>管理员登录 / 登出</li>
-          <li>基础限流</li>
-          <li>健康检查</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>M2 · 体验增强</h3>
-        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
-          <li>表情、头像、通知</li>
-          <li>点赞、暗黑模式</li>
-          <li>置顶、配置管理</li>
-          <li>站长回复</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>M3 · 扩展功能</h3>
-        <ul style="color:var(--muted);font-size:0.82rem;padding-left:1.1rem;margin-top:8px;">
-          <li>数据导入导出</li>
-          <li>一键备份</li>
-          <li>QQ / GitHub / 邮箱绑定</li>
-          <li>两步验证</li>
-          <li>多站点</li>
-        </ul>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:150px;">里程碑</th><th>范围</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>M1 · 核心闭环</strong></td><td>评论增删查、全量审核、管理员登录 / 登出、基础限流、健康检查</td></tr>
+          <tr><td><strong>M2 · 体验增强</strong></td><td>表情、头像、通知；点赞、暗黑模式；置顶、配置管理；站长回复</td></tr>
+          <tr><td><strong>M3 · 扩展功能</strong></td><td>数据导入导出；一键备份；QQ / GitHub / 邮箱绑定；两步验证；多站点</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -207,16 +188,13 @@
       <span class="section-num">06</span>
       <h2>构建与发布</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>前端打包（esbuild）</h3>
-        <pre style="margin:8px 0 0;"><code>"build": "esbuild front/comment.js --minify --outfile=front/comment.min.js &amp;&amp; esbuild front/comment.css --minify --outfile=front/comment.min.css"</code></pre>
-      </div>
-      <div class="card">
-        <h3>后端交叉编译（零 CGO）</h3>
-        <pre style="margin:8px 0 0;"><code><span class="c"># Linux amd64 / arm64，版本号注入健康检查</span>
+    <div class="flow">
+      <h3>前端打包（esbuild）</h3>
+      <pre><code>"build": "esbuild front/comment.js --minify --outfile=front/comment.min.js &amp;&amp; esbuild front/comment.css --minify --outfile=front/comment.min.css"</code></pre>
+
+      <h3>后端交叉编译（零 CGO）</h3>
+      <pre><code><span class="c"># Linux amd64 / arm64，版本号注入健康检查</span>
 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X dwxcmt/controller.Version=v1.0.0" -o dwx-comment main.go</code></pre>
-      </div>
     </div>
     <div class="table-wrap" style="margin-top:16px;">
       <table>
@@ -240,23 +218,18 @@ GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X dwxcmt/controller.Version=v1
       <span class="section-num">07</span>
       <h2>测试与质量保障</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>单元测试</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">覆盖评论、回复、审核、反垃圾、两步验证、邮件通知（mock SMTP）、限流、工具函数等核心路径，随模块迭代同步编写。</p>
-      </div>
-      <div class="card">
-        <h3>性能压测</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">hey 并发压测读 / 写路径，pprof 观测内存与 goroutine；压测配置独立隔离（stress.db），不污染生产数据。</p>
-      </div>
-      <div class="card">
-        <h3>线上验证</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">真实部署后验证限流精确性、CORS 白名单、TLS、IP 伪造防护、静态缓存等安全与运维项。</p>
-      </div>
-      <div class="card">
-        <h3>安全测试</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">CORS 未白名单拦截、X-Forwarded-For 伪造无效、错误信息不泄露内部细节。</p>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:120px;">保障项</th><th>内容</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>单元测试</strong></td><td>覆盖评论、回复、审核、反垃圾、两步验证、邮件通知（mock SMTP）、限流、工具函数等核心路径，随模块迭代同步编写。</td></tr>
+          <tr><td><strong>性能压测</strong></td><td>hey 并发压测读 / 写路径，pprof 观测内存与 goroutine；压测配置独立隔离（stress.db），不污染生产数据。</td></tr>
+          <tr><td><strong>线上验证</strong></td><td>真实部署后验证限流精确性、CORS 白名单、TLS、IP 伪造防护、静态缓存等安全与运维项。</td></tr>
+          <tr><td><strong>安全测试</strong></td><td>CORS 未白名单拦截、X-Forwarded-For 伪造无效、错误信息不泄露内部细节。</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 

@@ -35,6 +35,26 @@ func (s *Service) AuditComment(id int64, status int) error {
 	return nil
 }
 
+// ClearCommentLink 清除评论的网站链接但保留评论本身，适用于链接不适合展示（如未备案/敏感站点）。
+// 链接影响前台昵称渲染为外链，清除后需清空该文章缓存即时生效。
+func (s *Service) ClearCommentLink(id int64) error {
+	c, err := s.GetComment(id)
+	if errors.Is(err, model.ErrNotFound) {
+		return model.ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := s.DB.Exec(
+		`UPDATE comments SET link = '', update_time = ? WHERE id = ?`,
+		time.Now().Unix(), id,
+	); err != nil {
+		return err
+	}
+	s.InvalidatePage(c.Site, c.PageID)
+	return nil
+}
+
 // DeleteComment 物理删除评论（根评论级联删除其全部回复）
 func (s *Service) DeleteComment(id int64) (int64, error) {
 	c, err := s.GetComment(id)

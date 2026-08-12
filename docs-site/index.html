@@ -60,26 +60,63 @@
 
 <main class="container container-narrow">
 
-  <!-- 核心数据 -->
+  <!-- 核心数据（实测，非估算） -->
   <section class="section reveal">
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="num">25<small> KB</small></div>
-        <div class="label">前端打包体积上限（gzip 后 ≤ 8KB）</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">45<small> MB</small></div>
-        <div class="label">后端内存占用上限（整机 ≤ 100MB）</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">7.9<small> 万</small></div>
-        <div class="label">本地读路径 QPS（平均延迟 ≤ 2.3ms）</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">1</div>
-        <div class="label">个二进制 + 1 个数据库文件 = 整套系统</div>
-      </div>
+    <div class="section-head">
+      <span class="section-num">MEASURED</span>
+      <h2>核心数据（实测，非估算）</h2>
     </div>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:14px;">
+      以下数据来自本地压测与线上部署实测（cmt.example.com），详见《07-性能测试报告》与
+      <a href="results.html">成果页</a>。
+    </p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>指标</th><th>实测值</th><th>依据</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>读路径吞吐</td>
+            <td><strong>≈ 7.9 万 req/s</strong></td>
+            <td>5 实例 × 20 并发 × 30s，累计 2,059,841 次响应，0 错误</td>
+          </tr>
+          <tr>
+            <td>读路径延迟</td>
+            <td><strong>平均 0.6~2.3 ms，p99 &lt; 14 ms</strong></td>
+            <td>同上压测（空列表快速路径）</td>
+          </tr>
+          <tr>
+            <td>写路径吞吐</td>
+            <td><strong>≈ 158 条/s</strong></td>
+            <td>10s 成功写入 1,577 条，0 错误（修正 IP 随机化后）</td>
+          </tr>
+          <tr>
+            <td>压测峰值内存</td>
+            <td><strong>WorkingSet 43.7 MB</strong></td>
+            <td>GC 后回落 28.3 MB，仅为 1G 机器建议阈值（600MB）的 7%</td>
+          </tr>
+          <tr>
+            <td>压测质量</td>
+            <td><strong>0 错误 / 0 5xx / 0 协程泄漏</strong></td>
+            <td>读 + 写全程；pprof 无业务对象堆积</td>
+          </tr>
+          <tr>
+            <td>前端首屏资源</td>
+            <td><strong>构建产物 ≈ 42 KB（gzip ≈ 12 KB）</strong></td>
+            <td>comment.min.js + comment.min.css 实测体积；设计目标 ≤ 25 KB（gzip ≤ 8 KB）</td>
+          </tr>
+          <tr>
+            <td>部署形态</td>
+            <td><strong>1 个二进制 + 1 个数据库文件</strong></td>
+            <td>SQLite 单文件，纯静态前端，无需 Node / Redis</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--muted);font-size:0.78rem;margin-top:10px;">
+      注：读压测阶段数据库为空，走空列表快速路径；线上 TTFB 中位数 ≈ 58ms，主要受网络 RTT（≈22ms）影响，服务端处理为毫秒级。
+    </p>
   </section>
 
   <!-- 核心理念 -->
@@ -88,22 +125,22 @@
       <span class="section-num">CORE IDEAS</span>
       <h2>核心理念</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
+    <div class="def-list">
+      <div class="def-item">
         <h3>极致轻量</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">拒绝冗余中间件与重型框架。Go 单二进制 + SQLite 单文件 + 原生 JS，无 Node.js、无 Redis、无消息队列。</p>
+        <p class="def-desc">拒绝冗余中间件与重型框架。Go 单二进制 + SQLite 单文件 + 原生 JS，无 Node.js、无 Redis、无消息队列。</p>
       </div>
-      <div class="card">
+      <div class="def-item">
         <h3>数据完全自主</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">评论数据存放在自己的服务器本地文件，可随时导出、备份、迁移，不依赖任何第三方平台。</p>
+        <p class="def-desc">评论数据存放在自己的服务器本地文件，可随时导出、备份、迁移，不依赖任何第三方平台。</p>
       </div>
-      <div class="card">
+      <div class="def-item">
         <h3>零用户门槛</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">评论者无需注册、无需登录，填昵称即可发言；管理员与访客走完全不同的通道。</p>
+        <p class="def-desc">评论者无需注册、无需登录，填昵称即可发言；管理员与访客走完全不同的通道。</p>
       </div>
-      <div class="card">
+      <div class="def-item">
         <h3>安全优先</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">全量人工审核 + 本地敏感词 + 双层限流 + 参数化查询，防注入、防 XSS、防刷屏。</p>
+        <p class="def-desc">全量人工审核 + 本地敏感词 + 双层限流 + 参数化查询，防注入、防 XSS、防刷屏。</p>
       </div>
     </div>
   </section>
@@ -122,53 +159,39 @@
       <span class="section-num">DOCUMENTATION</span>
       <h2>文档导航</h2>
     </div>
-    <div class="grid grid-2">
-      <a class="nav-card" href="background.html">
-        <span class="nc-en">01 — Background</span>
-        <span class="nc-title">项目背景</span>
-        <span class="nc-desc">第三方评论服务的痛点、产品定位、目标用户、设计目标与适用场景范围。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="design.html">
-        <span class="nc-en">02 — Design</span>
-        <span class="nc-title">设计理念</span>
-        <span class="nc-desc">核心理念、20 条产品决策记录、与 Waline / Twikoo 的差异化对比。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="architecture.html">
-        <span class="nc-en">03 — Architecture</span>
-        <span class="nc-title">技术架构</span>
-        <span class="nc-desc">技术选型、四层架构、请求流转、核心模块、安全设计与 ADR 决策。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="features.html">
-        <span class="nc-en">04 — Features</span>
-        <span class="nc-title">功能模块说明</span>
-        <span class="nc-desc">角色定义、核心评论功能、管理功能、反垃圾审核、数据迁移与 API 一览。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="visual.html">
-        <span class="nc-en">05 — Visual</span>
-        <span class="nc-title">视觉设计规范</span>
-        <span class="nc-desc">设计语言、色彩系统、字体排印、组件规范与暗黑模式的设计令牌。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="implementation.html">
-        <span class="nc-en">06 — Implementation</span>
-        <span class="nc-title">制作流程与实现步骤</span>
-        <span class="nc-desc">文档驱动的开发方法、里程碑排期、实际提交记录、目录结构与构建发布。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <a class="nav-card" href="results.html">
-        <span class="nc-en">07 — Results</span>
-        <span class="nc-title">项目成果展示</span>
-        <span class="nc-desc">性能压测数据、线上部署实测、资源占用表现与结论建议。</span>
-        <span class="nc-more">阅读 →</span>
-      </a>
-      <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
-        <h3 style="margin-bottom:6px;">开源</h3>
-        <p style="color:var(--muted);font-size:0.82rem;margin:0;">本文档站完整描述 dwxComment 的「为什么」与「怎么做」，作为开源项目的中文介绍与设计文档。</p>
+    <div class="def-list">
+      <div class="def-item">
+        <h3><a href="background.html">01 · 项目背景</a></h3>
+        <p class="def-desc">第三方评论服务的痛点、产品定位、目标用户、设计目标与适用场景范围。</p>
       </div>
+      <div class="def-item">
+        <h3><a href="design.html">02 · 设计理念</a></h3>
+        <p class="def-desc">核心理念、20 条产品决策记录、与 Waline / Twikoo 的差异化对比。</p>
+      </div>
+      <div class="def-item">
+        <h3><a href="architecture.html">03 · 技术架构</a></h3>
+        <p class="def-desc">技术选型、四层架构、请求流转、核心模块、安全设计与 ADR 决策。</p>
+      </div>
+      <div class="def-item">
+        <h3><a href="features.html">04 · 功能模块说明</a></h3>
+        <p class="def-desc">角色定义、核心评论功能、管理功能、反垃圾审核、数据迁移与 API 一览。</p>
+      </div>
+      <div class="def-item">
+        <h3><a href="visual.html">05 · 视觉设计规范</a></h3>
+        <p class="def-desc">设计语言、色彩系统、字体排印、组件规范与暗黑模式的设计令牌。</p>
+      </div>
+      <div class="def-item">
+        <h3><a href="implementation.html">06 · 制作流程与实现步骤</a></h3>
+        <p class="def-desc">文档驱动的开发方法、里程碑排期、实际提交记录、目录结构与构建发布。</p>
+      </div>
+      <div class="def-item">
+        <h3><a href="results.html">07 · 项目成果展示</a></h3>
+        <p class="def-desc">性能压测数据、线上部署实测、资源占用表现与结论建议。</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:16px;">
+      <span class="co-title">开源</span>
+      本文档站完整描述 dwxComment 的「为什么」与「怎么做」，作为开源项目的中文介绍与设计文档。
     </div>
   </section>
 

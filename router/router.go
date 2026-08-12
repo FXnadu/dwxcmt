@@ -37,6 +37,7 @@ func New(cfg *config.Config, svc *service.Service, auth *middleware.Auth, global
 	api.Handle("POST /api/v1/admin/logout", auth.Middleware(http.HandlerFunc(adminCtl.Logout)))
 	api.Handle("DELETE /api/v1/admin/comment/{id}", auth.Middleware(http.HandlerFunc(adminCtl.Delete)))
 	api.Handle("PUT /api/v1/admin/comment/{id}/audit", auth.Middleware(http.HandlerFunc(adminCtl.Audit)))
+	api.Handle("PUT /api/v1/admin/comment/{id}/link", auth.Middleware(http.HandlerFunc(adminCtl.ClearLink)))
 	api.Handle("POST /api/v1/admin/comment/{id}/reply", auth.Middleware(http.HandlerFunc(adminCtl.Reply)))
 	api.Handle("PUT /api/v1/admin/comments/batch-audit", auth.Middleware(http.HandlerFunc(adminCtl.BatchAudit)))
 	api.Handle("POST /api/v1/admin/comments/batch-delete", auth.Middleware(http.HandlerFunc(adminCtl.BatchDelete)))

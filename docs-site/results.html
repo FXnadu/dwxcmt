@@ -52,23 +52,38 @@
 
   <!-- 核心数据 -->
   <section class="section reveal" id="stats">
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="num">7.9<small> 万</small></div>
-        <div class="label">读路径 QPS（5 实例合计）</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">0.6~2.3<small> ms</small></div>
-        <div class="label">平均延迟，p99 &lt; 14ms</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">43.7<small> MB</small></div>
-        <div class="label">压测峰值内存（阈值 600MB 的 7%）</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">0</div>
-        <div class="label">压测全程错误 / 5xx / 协程泄漏</div>
-      </div>
+    <div class="section-head">
+      <span class="section-num">SUMMARY</span>
+      <h2>核心数据一览</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>指标</th><th>数值</th><th>说明</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>读路径吞吐</td>
+            <td><strong>≈ 7.9 万 req/s</strong></td>
+            <td>5 实例合计，详见下文 §01 本地压测</td>
+          </tr>
+          <tr>
+            <td>读路径延迟</td>
+            <td><strong>0.6~2.3 ms</strong></td>
+            <td>p99 &lt; 14 ms</td>
+          </tr>
+          <tr>
+            <td>压测峰值内存</td>
+            <td><strong>43.7 MB</strong></td>
+            <td>GC 后回落 28.3 MB，为建议阈值（600MB）的 7%</td>
+          </tr>
+          <tr>
+            <td>压测质量</td>
+            <td><strong>0</strong></td>
+            <td>全程 0 错误 / 0 5xx / 0 协程泄漏</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
@@ -93,6 +108,71 @@
           <tr class="hl"><td><strong>合计</strong></td><td><strong>≈ 78,900</strong></td><td><strong>0.6~2.3 ms</strong></td><td><strong>&lt; 14 ms</strong></td><td><strong>2,059,841</strong></td><td><strong>0 错误</strong></td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">读压测 · 各实例 QPS（5 实例 × 20 并发 × 30s，累计 2,059,841 次响应）</div>
+      <svg class="chart" viewBox="0 0 720 300" role="img" aria-label="各实例读路径 QPS 条形图">
+        <line class="grid" x1="96" y1="24" x2="96" y2="236"/>
+        <line class="grid" x1="237" y1="24" x2="237" y2="236"/>
+        <line class="grid" x1="378" y1="24" x2="378" y2="236"/>
+        <line class="grid" x1="519" y1="24" x2="519" y2="236"/>
+        <line class="grid" x1="660" y1="24" x2="660" y2="236"/>
+        <line class="axis" x1="96" y1="236" x2="660" y2="236"/>
+        <text class="tick" x="96" y="18" text-anchor="middle">0</text>
+        <text class="tick" x="237" y="18" text-anchor="middle">20k</text>
+        <text class="tick" x="378" y="18" text-anchor="middle">40k</text>
+        <text class="tick" x="519" y="18" text-anchor="middle">60k</text>
+        <text class="tick" x="660" y="18" text-anchor="middle">80k</text>
+        <rect class="bar" x="96" y="34" width="307" height="18"/>
+        <rect class="bar" x="96" y="68" width="62" height="18"/>
+        <rect class="bar" x="96" y="102" width="62" height="18"/>
+        <rect class="bar" x="96" y="136" width="63" height="18"/>
+        <rect class="bar" x="96" y="170" width="62" height="18"/>
+        <rect class="bar bar-hl" x="96" y="204" width="556" height="18"/>
+        <text class="tick" x="90" y="43" text-anchor="end">worker1</text>
+        <text class="tick" x="90" y="77" text-anchor="end">worker2</text>
+        <text class="tick" x="90" y="111" text-anchor="end">worker3</text>
+        <text class="tick" x="90" y="145" text-anchor="end">worker4</text>
+        <text class="tick" x="90" y="179" text-anchor="end">worker5</text>
+        <text class="tick" x="90" y="213" text-anchor="end">合计</text>
+        <text class="val" x="411" y="43">43,602</text>
+        <text class="val" x="166" y="77">8,806</text>
+        <text class="val" x="166" y="111">8,723</text>
+        <text class="val" x="167" y="145">8,940</text>
+        <text class="val" x="166" y="179">8,852</text>
+        <text class="val" x="660" y="213">≈ 78,900</text>
+        <text class="tick" x="378" y="290" text-anchor="middle">QPS（req/s，刻度 0–80k）</text>
+      </svg>
+      <div class="chart-note">worker1 因最早启动独占 CPU 时段，QPS 明显高于其余实例，属调度现象而非性能差异（《07-性能测试报告》§2.1 注明）；其余四实例稳定在 ~8.8k，平均延迟 2.3ms。</div>
+    </div>
+
+    <div class="chart-block">
+      <div class="chart-title">压测期间内存表现 · WorkingSet（MB）</div>
+      <svg class="chart" viewBox="0 0 720 240" role="img" aria-label="内存占用条形图">
+        <line class="grid" x1="96" y1="158" x2="660" y2="158"/>
+        <line class="grid" x1="96" y1="126" x2="660" y2="126"/>
+        <line class="grid" x1="96" y1="94" x2="660" y2="94"/>
+        <line class="grid" x1="96" y1="62" x2="660" y2="62"/>
+        <line class="grid" x1="96" y1="30" x2="660" y2="30"/>
+        <line class="axis" x1="96" y1="190" x2="660" y2="190"/>
+        <text class="tick" x="88" y="162" text-anchor="end">10</text>
+        <text class="tick" x="88" y="130" text-anchor="end">20</text>
+        <text class="tick" x="88" y="98" text-anchor="end">30</text>
+        <text class="tick" x="88" y="66" text-anchor="end">40</text>
+        <text class="tick" x="88" y="34" text-anchor="end">50</text>
+        <rect class="bar" x="131" y="139" width="110" height="51"/>
+        <rect class="bar" x="305" y="50" width="110" height="140"/>
+        <rect class="bar bar-hl" x="479" y="99" width="110" height="91"/>
+        <text class="val" x="186" y="131" text-anchor="middle">15.8</text>
+        <text class="val" x="360" y="42" text-anchor="middle">43.7</text>
+        <text class="val" x="534" y="91" text-anchor="middle">28.3</text>
+        <text class="tick" x="186" y="210" text-anchor="middle">基线</text>
+        <text class="tick" x="360" y="210" text-anchor="middle">压测峰值</text>
+        <text class="tick" x="534" y="210" text-anchor="middle">GC 后</text>
+        <text class="tick" x="378" y="232" text-anchor="middle">WorkingSet（MB）</text>
+      </svg>
+      <div class="chart-note">压测峰值 43.7MB，仅为 1G 机器建议阈值（600MB）的 7%；GC 后堆仅增长 ~1.5MB，对应压测期间新增约 2,600 条评论数据。goroutine 基线 11 → 压测后 11，无泄漏。</div>
     </div>
 
     <h3 style="margin-top:28px;">写压测：提交评论（8 worker × 20s，单 IP 最坏场景）</h3>
@@ -136,19 +216,14 @@
       <span class="section-num">02</span>
       <h2>线上部署实测（cmt.example.com）</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
+    <div class="def-list">
+      <div class="def-item">
         <h3>可达性与延迟</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">健康检查 HTTP 200，版本 0.1.0；TTFB 稳定后中位数 ≈ 58ms（范围 50~73ms），网络 RTT 约 22ms，服务端处理毫秒级，TTFB 主要由网络链路决定。</p>
+        <p class="def-desc">健康检查 HTTP 200，版本 0.1.0；TTFB 稳定后中位数 ≈ 58ms（范围 50~73ms），网络 RTT 约 22ms，服务端处理毫秒级，TTFB 主要由网络链路决定。</p>
       </div>
-      <div class="card">
+      <div class="def-item">
         <h3>功能与安全验证</h3>
-        <ul style="color:var(--muted);font-size:0.85rem;margin:0;padding-left:1.1rem;">
-          <li>评论列表返回真实 roots + children 树结构（含站长回复 isAdmin=1）</li>
-          <li>CORS 白名单精确生效，预检 OPTIONS 204</li>
-          <li>12 连发同 IP → 6 成功 + 6 被限流，5 req/s 精确生效</li>
-          <li>外部伪造 X-Forwarded-For 无效（从右向左取首个非可信 IP）</li>
-        </ul>
+        <p class="def-desc">评论列表返回真实 roots + children 树结构（含站长回复 isAdmin=1）；CORS 白名单精确生效，预检 OPTIONS 204；12 连发同 IP → 6 成功 + 6 被限流，5 req/s 精确生效；外部伪造 X-Forwarded-For 无效（从右向左取首个非可信 IP）。</p>
       </div>
     </div>
     <div class="table-wrap" style="margin-top:16px;">
@@ -193,23 +268,18 @@
       <span class="section-num">04</span>
       <h2>结论</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>性能达标</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">读路径 ~7.9 万 req/s、亚毫秒~2ms 延迟；写路径原始吞吐 ≥ 158 条/s；单 IP 最坏场景精确执行限流配额，全程 0 错误、0 5xx。</p>
-      </div>
-      <div class="card">
-        <h3>内存稳定</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">峰值 WorkingSet 43.7MB（阈值 7%），GC 后堆无增长，goroutine 无泄漏，1G 内存机器可长期稳定运行。</p>
-      </div>
-      <div class="card">
-        <h3>线上运行健康</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">TTFB ~58ms（以网络 RTT 为主），限流、CORS、TLS、静态缓存、IP 伪造防护全部按设计生效，业务数据读写正常。</p>
-      </div>
-      <div class="card">
-        <h3>成果验证</h3>
-        <p style="color:var(--muted);font-size:0.85rem;margin:0;">「单二进制 + 单文件数据库 + 纯静态前端 ≤ 25KB」的轻量目标全部达成，验证了「极致轻量」理念在真实环境中的可行性。</p>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:130px;">结论</th><th>依据</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>性能达标</strong></td><td>读路径 ~7.9 万 req/s、亚毫秒~2ms 延迟；写路径原始吞吐 ≥ 158 条/s；单 IP 最坏场景精确执行限流配额，全程 0 错误、0 5xx。</td></tr>
+          <tr><td><strong>内存稳定</strong></td><td>峰值 WorkingSet 43.7MB（阈值 7%），GC 后堆无增长，goroutine 无泄漏，1G 内存机器可长期稳定运行。</td></tr>
+          <tr><td><strong>线上运行健康</strong></td><td>TTFB ~58ms（以网络 RTT 为主），限流、CORS、TLS、静态缓存、IP 伪造防护全部按设计生效，业务数据读写正常。</td></tr>
+          <tr><td><strong>成果验证</strong></td><td>「单二进制 + 单文件数据库」轻量目标达成；前端构建产物实测 ≈ 42KB（gzip ≈ 12KB），距离 ≤ 25KB（gzip ≤ 8KB）的设计目标仍有收敛空间。</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 

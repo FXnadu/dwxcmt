@@ -370,15 +370,17 @@
   }
   .cs-item.selected:hover { background: rgba(196, 184, 206, 0.22); }
   .cs-wrap.site-sel .cs-trigger {
-    min-width: 180px;
-    width: auto;
-    max-width: 260px;
+    display: inline-block;
+    width: 100%;
+    max-width: 100%;
     padding: 0.55rem 2.25rem 0.55rem 0.85rem;
     font-size: 0.78rem;
+    vertical-align: middle;
   }
   .cs-wrap.site-sel {
     flex: none;
     width: 180px;
+    min-width: 0;
     padding: 0;
   }
   .filters .cs-trigger { width: auto; }
@@ -400,6 +402,8 @@
   .cmt-id { color: var(--muted); font-size: 0.75rem; }
   .cmt-content { margin: 1rem 0; white-space: pre-wrap; word-break: break-word; line-height: 1.7; font-size: 0.85rem; font-weight: 400; }
   .cmt-meta { color: var(--muted); font-size: 0.75rem; word-break: break-all; }
+  .cmt-meta a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  .cmt-meta a:hover { text-decoration: underline; }
   .cmt-actions { margin-top: 1rem; display: flex; gap: 8px; flex-wrap: wrap; }
   .cmt-check { display: inline-flex; align-items: center; margin-right: 2px; flex: none; }
   .cmt-check input[type=checkbox], .batch-selall input[type=checkbox] {
@@ -526,7 +530,7 @@
     .login-box { max-width: none; }
     .topbar h1 { width: 100%; }
     .topbar .spacer { display: none; }
-    .site-sel, .cs-wrap.site-sel { flex: 1; min-width: auto; max-width: none; }
+    .site-sel, .cs-wrap.site-sel { flex: 1; min-width: 0; max-width: none; }
     .cs-wrap.site-sel .cs-trigger { width: 100%; }
     .user-menu { flex: 1; }
     .user-menu-btn { width: 100%; min-width: auto; }
@@ -1285,6 +1289,7 @@
     var isReply = c.parentId > 0;
     var meta = [];
     if (c.email) meta.push('邮箱：' + esc(c.email));
+    if (c.link) meta.push('网站：<a href="' + esc(c.link) + '" target="_blank" rel="noopener nofollow ugc">' + esc(c.link) + '</a>');
     if (c.ip) meta.push('IP：' + esc(c.ip));
     if (c.userAgent) meta.push('UA：' + esc(c.userAgent));
     if (isReply) meta.push('回复 #' + c.parentId);
@@ -1301,6 +1306,7 @@
       actions += '<button class="btn btn-sm btn-ok" data-a="pass" data-id="' + c.id + '"><i class="fa-solid fa-check"></i>通过</button>';
       actions += '<button class="btn btn-sm btn-warn" data-a="spam" data-id="' + c.id + '"><i class="fa-solid fa-triangle-exclamation"></i>标记垃圾</button>';
     }
+    if (c.link) actions += '<button class="btn btn-sm" data-a="unlink" data-id="' + c.id + '" title="保留评论，但不再外链到该网站"><i class="fa-solid fa-link-slash"></i>去除链接</button>';
     if (c.isAudited === 1) actions += '<button class="btn btn-sm" data-a="reply" data-id="' + c.id + '" data-nick="' + esc(c.nick) + '"><i class="fa-solid fa-reply"></i>回复</button>';
     if (state.canDelete) actions += '<button class="btn btn-sm btn-danger" data-a="del" data-id="' + c.id + '"><i class="fa-regular fa-trash-can"></i>删除</button>';
     return '<div class="card' + (state.sel[c.id] ? ' selected' : '') + '">' +
@@ -1635,9 +1641,22 @@
       spam: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/audit', b: { status: -1 }, ok: '已标记为垃圾' },
       del: { m: 'DELETE', p: '/api/v1/admin/comment/' + id, b: null, ok: '已删除' },
       pin: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/pin', b: null, ok: '已置顶' },
-      unpin: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/unpin', b: null, ok: '已取消置顶' }
+      unpin: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/unpin', b: null, ok: '已取消置顶' },
+      unlink: { m: 'PUT', p: '/api/v1/admin/comment/' + id + '/link', b: null, ok: '已去除链接' }
     }[a];
     if (!act) return;
+    if (a === 'unlink') {
+      // 清除链接不可恢复，确认后再执行；评论本身与内容保留
+      showConfirm({ title: '去除链接', message: '确定去除这条评论的网站链接吗？评论本身会保留，但昵称将不再外链到该网站。', okText: '去除链接', danger: true, onOk: function () {
+        btn.disabled = true;
+        api(act.m, act.p, act.b).then(function (res) {
+          if (res.code !== 0) { btn.disabled = false; toast(res.msg || '操作失败', false); return; }
+          toast(act.ok, true);
+          reloadCurrentList();
+        }).catch(function () { btn.disabled = false; toast('网络错误，请重试', false); });
+      } });
+      return;
+    }
     if (a === 'del') {
       showConfirm({ title: '删除评论', message: '确定删除这条评论吗？此操作不可恢复。', okText: '删除', danger: true, onOk: function () {
         btn.disabled = true;

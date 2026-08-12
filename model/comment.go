@@ -115,7 +115,7 @@ func (d CommentDTO) MarshalJSON() ([]byte, error) {
 
 // avatarCandidates 有邮箱时返回有序的真实头像候选地址（前端按顺序加载，全部失败再回退字母头像）。
 // 只返回第三方服务的查询地址，不暴露邮箱本身。
-// Cravatar 是国内 CDN，优先于 Gravatar（gravatar.com 国内直连慢/常失败，放最后仅作境外兜底）。
+// 仅使用 Cravatar 国内 CDN；gravatar.com 国内直连慢/常挂起（曾导致页面加载拖慢数秒），已移除。
 // QQ 邮箱（@qq.com 且本地为纯数字 QQ 号）不走腾讯 qlogo 直链，而是返回本服务代理地址
 // /api/v1/avatars/{id}（由后端代拉图片并磁盘缓存），避免在公开响应中暴露 QQ 号（= 邮箱前缀）。
 // 代理地址放最前：命中缓存时毫秒级返回，不再被第三方慢请求串行拖累。
@@ -128,7 +128,6 @@ func avatarCandidates(id int64, email string) []string {
 	hash := hex.EncodeToString(sum[:])
 	cands := []string{
 		"https://cravatar.cn/avatar/" + hash + "?d=404&s=48",
-		"https://www.gravatar.com/avatar/" + hash + "?d=404&s=48",
 	}
 	if qq := QQFromEmail(lower); qq != "" {
 		cands = append([]string{"/api/v1/avatars/" + strconv.FormatInt(id, 10)}, cands...)

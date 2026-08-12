@@ -1,6 +1,7 @@
 package service
 
 import (
+	"dwxcmt/model"
 	"testing"
 )
 
@@ -213,5 +214,61 @@ func TestBatchDeleteComments_InvalidatesPageCache(t *testing.T) {
 	}
 	if len(second.Roots) != 0 {
 		t.Errorf("删除后列表应为空（缓存已失效）, got %+v", second.Roots)
+	}
+}
+
+// ===== ClearCommentLink =====
+
+// TestClearCommentLink_KeepsCommentClearsLink 去除链接后评论本身保留、link 清空，且前台列表缓存即时失效。
+func TestClearCommentLink_KeepsCommentClearsLink(t *testing.T) {
+	svc := testService(t)
+	insertTestComment(t, svc.DB, 1, 0)
+	if _, err := svc.DB.Exec(`UPDATE comments SET link = 'https://spam.example.com' WHERE id = 1`); err != nil {
+		t.Fatalf("预置链接失败: %v", err)
+	}
+
+	// 先按带链接状态缓存一份列表；若 ClearCommentLink 未失效缓存，
+	// 之后 ListComments 仍会命中这里缓存的旧链接
+	first, err := svc.ListComments("/test", "default", 1, 10, "asc")
+	if err != nil {
+		t.Fatalf("首次加载列表失败: %v", err)
+	}
+	if len(first.Roots) == 0 {
+		t.Fatal("列表应有评论")
+	}
+	if first.Roots[0].Link == "" {
+		t.Fatal("预置链接应可见，测试前提不成立")
+	}
+
+	if err := svc.ClearCommentLink(1); err != nil {
+		t.Fatalf("去除链接失败: %v", err)
+	}
+
+	// 评论本身保留，link 已清空
+	c, err := svc.GetComment(1)
+	if err != nil {
+		t.Fatalf("评论应保留: %v", err)
+	}
+	if c.Link != "" {
+		t.Errorf("link 应被清空, got %q", c.Link)
+	}
+
+	// 二次读取：缓存已失效并重建，列表中的链接应为空
+	second, err := svc.ListComments("/test", "default", 1, 10, "asc")
+	if err != nil {
+		t.Fatalf("二次加载列表失败: %v", err)
+	}
+	if len(second.Roots) == 0 {
+		t.Fatal("列表应有评论")
+	}
+	if second.Roots[0].Link != "" {
+		t.Errorf("列表中的 link 应为空（缓存已失效）, got %q", second.Roots[0].Link)
+	}
+}
+
+func TestClearCommentLink_NotFound(t *testing.T) {
+	svc := testService(t)
+	if err := svc.ClearCommentLink(99999); err != model.ErrNotFound {
+		t.Errorf("不存在的评论应返回 ErrNotFound, got %v", err)
 	}
 }

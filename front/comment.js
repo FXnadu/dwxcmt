@@ -870,9 +870,9 @@
       var idx = 0;
       var done = false;
       var timer = null;
-      // 单个候选加载超时（毫秒）：第三方服务（如 gravatar.com）国内可能长时间挂起
+      // 单个候选加载超时（毫秒）：第三方服务（如 cravatar.cn）国内偶发挂起，
       // 既不成功也不报错，超时后强制跳到下一个候选，避免把后续头像堵死
-      var AVATAR_TIMEOUT = 4000;
+      var AVATAR_TIMEOUT = 1500;
       function avatarNext() {
         clearTimeout(timer);
         if (done) return;

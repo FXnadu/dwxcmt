@@ -57,23 +57,18 @@
       <h2>背景与痛点</h2>
     </div>
     <p style="font-size:0.88rem;">个人博客、静态文档站（Hexo / Hugo / VitePress 等）普遍依赖 Twikoo、Waline 等第三方评论服务，这些方案存在以下四大痛点：</p>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>依赖外部服务</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">第三方服务一旦关停、改版，评论功能即不可用，站点的读者互动能力完全受制于人。</p>
-      </div>
-      <div class="card">
-        <h3>资源开销大</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">Node.js 运行时内存占用高，对于 1 核 1G 的小型服务器是沉重负担。</p>
-      </div>
-      <div class="card">
-        <h3>数据不自主</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">评论数据存放在他人平台，迁移成本高，无法真正拥有自己的社区内容。</p>
-      </div>
-      <div class="card">
-        <h3>部署复杂</h3>
-        <p style="color:var(--muted);font-size:0.85rem;">依赖 Node.js 环境、云函数等，运维繁琐，升级与备份都需要额外学习成本。</p>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:150px;">痛点</th><th>影响</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>依赖外部服务</strong></td><td>第三方服务一旦关停、改版，评论功能即不可用，站点的读者互动能力完全受制于人。</td></tr>
+          <tr><td><strong>资源开销大</strong></td><td>Node.js 运行时内存占用高，对于 1 核 1G 的小型服务器是沉重负担。</td></tr>
+          <tr><td><strong>数据不自主</strong></td><td>评论数据存放在他人平台，迁移成本高，无法真正拥有自己的社区内容。</td></tr>
+          <tr><td><strong>部署复杂</strong></td><td>依赖 Node.js 环境、云函数等，运维繁琐，升级与备份都需要额外学习成本。</td></tr>
+        </tbody>
+      </table>
     </div>
     <div class="callout warn" style="margin-top:16px;">
       <span class="co-title">结论</span>
@@ -87,13 +82,20 @@
       <span class="section-num">02</span>
       <h2>产品定位</h2>
     </div>
-    <div class="card">
-      <h3 style="font-family:var(--font-display);">极致轻量的自托管评论系统：单二进制 + 单文件数据库 + 纯静态前端</h3>
-      <ul class="feat-list" style="margin-top:12px;">
-        <li><span class="fl-icon">↳</span><div><span class="fl-title">替代对象</span> <span class="fl-desc">Twikoo、Waline 等轻量评论服务</span></div></li>
-        <li><span class="fl-icon">↳</span><div><span class="fl-title">目标用户</span> <span class="fl-desc">技术博客作者、静态站点站长、自托管爱好者</span></div></li>
-        <li><span class="fl-icon">↳</span><div><span class="fl-title">核心理念</span> <span class="fl-desc">极致轻量、零重型依赖、数据完全自主、运维成本极低</span></div></li>
-      </ul>
+    <p style="margin:0 0 16px;">极致轻量的自托管评论系统：<strong>单二进制 + 单文件数据库 + 纯静态前端</strong></p>
+    <div class="def-list">
+      <div class="def-item">
+        <h3>替代对象</h3>
+        <p class="def-desc">Twikoo、Waline 等轻量评论服务</p>
+      </div>
+      <div class="def-item">
+        <h3>目标用户</h3>
+        <p class="def-desc">技术博客作者、静态站点站长、自托管爱好者</p>
+      </div>
+      <div class="def-item">
+        <h3>核心理念</h3>
+        <p class="def-desc">极致轻量、零重型依赖、数据完全自主、运维成本极低</p>
+      </div>
     </div>
   </section>
 
@@ -126,27 +128,44 @@
       <span class="section-num">04</span>
       <h2>适用场景与范围</h2>
     </div>
-    <div class="grid grid-2">
-      <div class="card">
-        <h3>适用场景</h3>
-        <ul class="feat-list" style="list-style:none;margin:10px 0 0;">
-          <li><span class="fl-icon">✓</span><div>个人博客（Hexo / Hugo / VitePress 等静态站）</div></li>
-          <li><span class="fl-icon">✓</span><div>文档站点、个人作品站</div></li>
-          <li><span class="fl-icon">✓</span><div>日访问量 ≤ 5000、日均评论 ≤ 200 的中小站点</div></li>
-          <li><span class="fl-icon">✓</span><div>需要完全自托管、避免第三方服务关停风险的场景</div></li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3>明确不做（非目标）</h3>
-        <ul class="feat-list" style="list-style:none;margin:10px 0 0;">
-          <li><span class="fl-icon">✕</span><div>评论者注册 / 登录体系（零门槛）</div></li>
-          <li><span class="fl-icon">✕</span><div>用户编辑 / 删除自己的评论（发后不改）</div></li>
-          <li><span class="fl-icon">✕</span><div>富文本 / 完整 Markdown 编辑器（仅纯文本 + 图片 URL + Emoji）</div></li>
-          <li><span class="fl-icon">✕</span><div>实时推送 / WebSocket（采用轮询式刷新）</div></li>
-          <li><span class="fl-icon">✕</span><div>评论软删除、取消赞、举报功能</div></li>
-        </ul>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:150px;">类别</th><th>内容</th></tr>
+        </thead>
+        <tbody>
+          <tr><td rowspan="4" style="vertical-align:middle;"><strong>适用场景</strong></td><td>个人博客（Hexo / Hugo / VitePress 等静态站）</td></tr>
+          <tr><td>文档站点、个人作品站</td></tr>
+          <tr><td>日访问量 ≤ 5000、日均评论 ≤ 200 的中小站点</td></tr>
+          <tr><td>需要完全自托管、避免第三方服务关停风险的场景</td></tr>
+          <tr><td rowspan="5" style="vertical-align:middle;"><strong>明确不做（非目标）</strong></td><td>评论者注册 / 登录体系（零门槛）</td></tr>
+          <tr><td>用户编辑 / 删除自己的评论（发后不改）</td></tr>
+          <tr><td>富文本 / 完整 Markdown 编辑器（仅纯文本 + 图片 URL + Emoji）</td></tr>
+          <tr><td>实时推送 / WebSocket（采用轮询式刷新）</td></tr>
+          <tr><td>评论软删除、取消赞、举报功能</td></tr>
+        </tbody>
+      </table>
     </div>
+
+    <div class="callout" style="margin-top:16px;">
+      <span class="co-title">超出规模说明</span>
+      上述「日访问量 ≤ 5000、日均评论 ≤ 200」是<b>产品定位声明，而非容量上限</b>：它用于划定「为谁设计」的边界，避免读者误判。实测读路径约 7.9 万 req/s、写路径原始吞吐 ≥ 158 条/s（瓶颈在压测客户端而非服务端），实际余量远大于该数值。真正限制项目规模的，是以下设计取舍而非性能：
+    </div>
+    <div class="table-wrap" style="margin-top:8px;">
+      <table>
+        <thead>
+          <tr><th style="width:150px;">限制维度</th><th>设计取舍</th><th>影响</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SQLite 单写者</td><td>写入串行（单文件锁）</td><td>评论由「人类打字」产生，天然低频，完全够用；机器批量灌流量时写入排队</td></tr>
+          <tr><td>全量审核 + 无用户体系</td><td>所有评论人工审核、评论者零门槛</td><td>日均 200 条一人可审；日均数千条时，审核人力成为运营瓶颈</td></tr>
+          <tr><td>功能边界</td><td>无注册登录 / 实时推送 / 编辑删除</td><td>高流量社区所需的产品形态不在本项目范围内，属刻意取舍</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--muted);font-size:0.78rem;margin-top:10px;">
+      判断方法：访问量大但评论量中等 → 直接使用，读路径是强项；评论量真正巨大（日均数千条以上）→ 需要带用户体系与机器人防护的社区方案，超出本项目定位。
+    </p>
   </section>
 
   <!-- 用户角色 -->
@@ -155,19 +174,17 @@
       <span class="section-num">05</span>
       <h2>用户角色定义</h2>
     </div>
-    <div class="grid grid-3">
-      <div class="card">
-        <h3>访客</h3>
-        <p style="color:var(--muted);font-size:0.82rem;margin:0;">浏览博客并发表评论的普通用户。核心诉求：快速发表、表情 / 图片支持、回复通知、无需注册。</p>
-      </div>
-      <div class="card">
-        <h3>被回复者</h3>
-        <p style="color:var(--muted);font-size:0.82rem;margin:0;">收到回复通知的评论者。核心诉求：通过邮件收到回复提醒。</p>
-      </div>
-      <div class="card">
-        <h3>站长 / 管理员</h3>
-        <p style="color:var(--muted);font-size:0.82rem;margin:0;">博客所有者。核心诉求：全量审核、删除垃圾、置顶、数据备份迁移、第三方绑定。</p>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th style="width:130px;">角色</th><th>定位</th><th>核心诉求</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>访客</strong></td><td>浏览博客并发表评论的普通用户</td><td>快速发表、表情 / 图片支持、回复通知、无需注册</td></tr>
+          <tr><td><strong>被回复者</strong></td><td>收到回复通知的评论者</td><td>通过邮件收到回复提醒</td></tr>
+          <tr><td><strong>站长 / 管理员</strong></td><td>博客所有者</td><td>全量审核、删除垃圾、置顶、数据备份迁移、第三方绑定</td></tr>
+        </tbody>
+      </table>
     </div>
   </section>
 
