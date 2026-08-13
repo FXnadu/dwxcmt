@@ -27,6 +27,8 @@ type Service struct {
 	Notifier Notifier
 	// emailCodes 邮箱验证码内存存储（单实例自托管，无需 Redis）
 	emailCodes *emailCodeStore
+	// avatarFetch 头像回源函数（nil 时用默认 fetchRemote；测试可注入替换，避免依赖外网）
+	avatarFetch func(url string) ([]byte, string, error)
 }
 
 // New 构造业务层

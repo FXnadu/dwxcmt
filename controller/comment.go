@@ -2,8 +2,10 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"dwxcmt/model"
 	"dwxcmt/pkg/utils"
 	"dwxcmt/service"
 )
@@ -63,18 +65,25 @@ func (c *CommentController) Count(w http.ResponseWriter, r *http.Request) {
 	utils.OK(w, map[string]interface{}{"count": count})
 }
 
-// Avatar GET /api/v1/avatars/{id} — QQ 头像代理接口（公开）
-// 评论者的 QQ 号不直接出现在头像 URL 中，由服务端代拉腾讯 qlogo 图片；
-// 失败返回 404，前端会回退到下一候选头像（Gravatar/Cravatar/字母头像）。
+// Avatar GET /api/v1/avatars/{id} — 评论者头像代理接口（公开）
+// 有邮箱评论者的头像不直接出现在公开响应中（候选地址仅含评论 ID），由服务端按邮箱类型
+// 代拉（QQ qlogo / Cravatar）并磁盘缓存；无头像（ErrNotFound）返回 404，前端回退字母头像；
+// 数据库等真实故障返回 500，避免与「无头像」混淆导致监控无从排查。
 func (c *CommentController) Avatar(w http.ResponseWriter, r *http.Request) {
 	id, err := service.ParseID(r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	data, contentType, err := c.svc.QQAvatar(id)
+	data, contentType, err := c.svc.Avatar(id)
 	if err != nil {
-		http.NotFound(w, r)
+		if errors.Is(err, model.ErrNotFound) {
+			http.NotFound(w, r)
+			return
+		}
+		// 数据库等真实故障：服务层已记录日志，这里返回 500 而非 404，
+		// 避免静默降级为「该用户无头像」误判（注释见 service.Avatar）
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", contentType)

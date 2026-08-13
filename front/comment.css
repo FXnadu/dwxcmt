@@ -213,6 +213,14 @@ a.lc-nick:hover { color: var(--lc-accent); }
   padding: 1px 6px; border-radius: var(--lc-radius);
   letter-spacing: .04em;
 }
+/* 待审核评论「审核中」徽标（与待审核背景同色系，文本色复用站长徽标色） */
+.lc-pending-tag {
+  background: var(--lc-pending-bg); color: var(--lc-admin-text);
+  border: 1px solid var(--lc-pending-border);
+  font-size: 11px; font-weight: 500;
+  padding: 1px 6px; border-radius: var(--lc-radius);
+  letter-spacing: .04em;
+}
 .lc-time { color: var(--lc-text-2); font-size: 12px; }
 
 .lc-content { margin: 10px 0; word-break: break-word; font-size: 14px; line-height: 1.7; }
@@ -236,6 +244,7 @@ a.lc-nick:hover { color: var(--lc-accent); }
   transition: color 0.3s ease, background 0.3s ease, border-color 0.3s ease;
 }
 .lc-actions button:hover { color: var(--lc-accent); background: var(--lc-surface-strong); border-color: var(--lc-border-hover); }
+.lc-actions button:disabled { opacity: .5; cursor: not-allowed; }
 
 .lc-children { margin-top: 12px; padding-left: 16px; border-left: 1px solid var(--lc-border); }
 .lc-collapse-btn {

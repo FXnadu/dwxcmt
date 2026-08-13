@@ -302,6 +302,7 @@ li { margin-bottom: 0.3rem; }
   margin-bottom: 10px;
 }
 .chart-block .chart-note { color: var(--muted); font-size: 0.74rem; margin-top: 8px; line-height: 1.6; }
+.chart-block img.chart-img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); background: #fff; }
 .chart-block svg { display: block; width: 100%; height: auto; }
 .chart text { font-family: var(--font-body); font-size: 11px; fill: var(--muted); }
 .chart .axis { stroke: var(--border); }

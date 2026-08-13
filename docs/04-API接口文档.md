@@ -67,7 +67,7 @@
   "nick": "张三",
   "link": "https://example.com",
   "content": "写得太好了！",
-  "avatarUrls": ["https://cravatar.cn/avatar/xxx?d=404&s=48", "https://www.gravatar.com/avatar/xxx?d=404&s=48"],
+  "avatarUrls": ["/api/v1/avatars/1"],
   "parentId": 0,
   "rootId": 0,
   "likeCount": 3,
@@ -76,7 +76,7 @@
   "createTime": 1700000000
 }
 ```
-> `avatarUrls`：有序的真实头像候选地址数组（**v3.1 替代早期单一 `avatar_url`**）。有邮箱时返回；QQ 邮箱在首位追加本服务代理地址 `/api/v1/avatars/{id}`。前端按序加载，全部失败回退字母头像。
+> `avatarUrls`：头像候选地址数组（**v3.2 起仅含本服务代理地址**）。有邮箱时返回 `/api/v1/avatars/{id}` 单候选，**不携带邮箱或其哈希**（公开响应杜绝 md5 字典爆破与跨站关联）；无邮箱不返回。前端加载失败回退字母头像。
 > `isAdmin`：站长回复标识（1 = 站长/管理员身份，前台展示「站长」徽章；仅非 0 时输出该字段）。
 > `isPinned`：是否置顶（1=是，置顶区按置顶时间倒序展示）。
 > 隐私字段 `email` / `ip` / `userAgent` 仅出现在管理接口响应中；非站长管理员查看时邮箱/IP 脱敏。
@@ -108,7 +108,7 @@
   "msg": "success",
   "data": {
     "roots": [
-      { "id": 1, "pageId": "/post/hello.html", "nick": "张三", "content": "写得太好了！", "avatarUrls": ["https://cravatar.cn/avatar/xxx?d=404&s=48"], "parentId": 0, "rootId": 0, "likeCount": 3, "isPinned": 1, "createTime": 1700000000 }
+      { "id": 1, "pageId": "/post/hello.html", "nick": "张三", "content": "写得太好了！", "avatarUrls": ["/api/v1/avatars/1"], "parentId": 0, "rootId": 0, "likeCount": 3, "isPinned": 1, "createTime": 1700000000 }
     ],
     "children": [
       { "id": 2, "nick": "李四", "content": "@张三 同意！", "parentId": 1, "rootId": 1, "isPinned": 0, "createTime": 1700000100 }
@@ -193,13 +193,16 @@
 { "code": 0, "msg": "success", "data": { "status": "ok", "version": "1.0.1" } }
 ```
 
-### 2.6 QQ 头像代理（v2.5 新增）
+### 2.6 评论者头像代理（v2.5 新增，v3.2 扩展为全邮箱）
 
 - **GET** `/api/v1/avatars/{id}`
 
-QQ 邮箱评论者的头像代理接口：公开响应中不暴露 QQ 号（= 邮箱前缀），由服务端代拉腾讯 qlogo 图片并本地磁盘缓存（24h）。
+所有留邮箱评论者的头像代理接口（QQ 与非 QQ 邮箱统一）：公开响应中**不暴露邮箱或邮箱哈希**，由服务端按邮箱类型代拉（QQ → qlogo，其他 → Cravatar）并本地磁盘缓存。
 
-- 命中缓存：毫秒级返回；失败返回 404（前端回退到下一候选头像）
+- 缓存键为**邮箱 md5**，同邮箱多评论共享；成功缓存 **7 天惰性 TTL**（可配 `comment.avatar_cache_ttl`，秒），失败标记 24h 后自动重试（覆盖「无 → 新注册头像」）
+- **磁盘回收**：启动时清理一次 + 定时清理（间隔可配 `comment.avatar_clean_interval_hours`，小时，默认 720=每月，0=仅启动时清理）。只删除读取路径已失效的文件——超过 TTL 的缓存、超过 24h 的标记、残留 tmp、非法命名孤儿——不影响线上命中
+- 命中缓存：毫秒级返回；失败返回 404（前端回退字母头像）
+- 评论不存在 / 无邮箱：直接 404，**不产生缓存文件**（防 ID 遍历放大磁盘）
 - 响应头：`Content-Type`、`Cache-Control: public, max-age=86400`、`X-Content-Type-Options: nosniff`
 
 ---
@@ -528,3 +531,5 @@ Content-Disposition: attachment; filename="dwx-comment-backup-20260810.db"
 | v3.0 | 2026-08-07 | 产品决策：移除图片上传与图床功能；删除接口 POST /api/v1/upload/image；删除错误码 4001/5002/6001~6004；删除请求/响应中的 imageUrl 与 settings 中的 imageHostProvider/imageHostConfig；章节编号由 7 调整为 6 |
 | v3.1 | 2026-08-10 | 同步至 v1.0.1 实现：评论对象 `avatarUrls`（候选数组，QQ 走代理）替代早期 avatar_url；公开列表 `sort` 语义明确（asc 最新在前默认 / desc / hot），置顶区按置顶时间倒序；管理端列表支持 `sort=newest/oldest/hot` 与已通过/垃圾 tab 关键词搜索；新增接口：注册（多管理员+站长审批）、2FA 登录、批量审核/删除、后台回复列表 `/admin/comments/replied`、账号管理、个人中心、OAuth 绑定（QQ/GitHub）、邮箱验证码登录/绑定、头像代理 `/avatars/{id}`、一键备份 `/admin/backup`；站点配置补 `siteUrl`/`pagerType`；错误码补 7001~7011 |
 | v3.2 | 2026-08-12 | 新增 PUT /api/v1/admin/comment/:id/link 去除评论网站链接接口（§3.6）：保留评论本身仅清空 link，前台昵称不再渲染为外链，同步失效对应文章缓存 |
+| v3.3 | 2026-08-13 | 隐私强化：§2.6 头像代理扩展为全邮箱（QQ qlogo / Cravatar 代拉），公开响应 `avatarUrls` 仅含本服务代理地址，不再含邮箱 md5；缓存键改邮箱 md5，成功缓存 7 天惰性 TTL（`comment.avatar_cache_ttl`），评论不存在/无邮箱直接 404 不落盘 |
+| v3.4 | 2026-08-13 | §2.6 头像缓存磁盘回收：新增 `comment.avatar_clean_interval_hours`（小时，默认 720=每月，0=仅启动时清理）；启动时清理一次 + 定时清理过期缓存/标记、残留 tmp、非法命名孤儿，防止孤儿文件长期累积 |

@@ -81,6 +81,12 @@ func main() {
 	c := cache.New(512, 60*time.Second)
 	svc := service.New(db, cfg, c)
 
+	// 头像缓存清理：启动时立即清理一次 + 按 comment.avatar_clean_interval_hours 定时（默认每月）。
+	// 只删除读取路径已失效的文件（过期缓存/标记、残留 tmp、历史孤儿命名），不影响线上命中。
+	avatarCleanCtx, avatarCleanCancel := context.WithCancel(context.Background())
+	defer avatarCleanCancel()
+	svc.StartAvatarCleaner(avatarCleanCtx)
+
 	blacklist := middleware.NewTokenBlacklist()
 	defer blacklist.Stop()
 	auth := &middleware.Auth{JWT: svc.JWT, Blacklist: blacklist}

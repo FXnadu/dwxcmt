@@ -78,23 +78,23 @@
         <tbody>
           <tr>
             <td>读路径吞吐</td>
-            <td><strong>≈ 7.9 万 req/s</strong></td>
-            <td>5 实例 × 20 并发 × 30s，累计 2,059,841 次响应，0 错误</td>
+            <td><strong>≈ 44,481 req/s</strong></td>
+            <td>5 实例 × 20 并发 × 30s，累计 1,334,644 次响应，0 错误（限流放宽口径，真实容量）</td>
           </tr>
           <tr>
             <td>读路径延迟</td>
-            <td><strong>平均 0.6~2.3 ms，p99 &lt; 14 ms</strong></td>
-            <td>同上压测（空列表快速路径）</td>
+            <td><strong>单实例平均 2.2~2.3 ms，p99 ≤ 11.8 ms</strong></td>
+            <td>独立逐请求采样 n=605,354：p50 0.4 / p99 2.2 ms</td>
           </tr>
           <tr>
             <td>写路径吞吐</td>
-            <td><strong>≈ 158 条/s</strong></td>
-            <td>10s 成功写入 1,577 条，0 错误（修正 IP 随机化后）</td>
+            <td><strong>≈ 1,008 条/s</strong></td>
+            <td>10s 成功写入 10,144 条，0 错误（不限速真实容量；旧口径 158 条/s 为 curl 客户端瓶颈）</td>
           </tr>
           <tr>
             <td>压测峰值内存</td>
-            <td><strong>WorkingSet 43.7 MB</strong></td>
-            <td>GC 后回落 28.3 MB，仅为 1G 机器建议阈值（600MB）的 7%</td>
+            <td><strong>WorkingSet 29.2 MB</strong></td>
+            <td>单实例实测（pprof），HeapInuse 7.7 MB；1 核 512MB 机器达标</td>
           </tr>
           <tr>
             <td>压测质量</td>

@@ -6,6 +6,11 @@ comment-e2e.db
 comment-e2e.db-wal
 comment-e2e.db-shm
 
+# 压测产物（stress-write.py 生成，含测试数据）
+stress.db
+stress.db-wal
+stress.db-shm
+
 # e2e 运行时产物
 .e2e/*.json
 
@@ -24,6 +29,12 @@ waline_*/
 config/config.yaml
 config/config.local.yaml
 /config.yaml
+
+# example 实例生产配置（含 JWT secret / SMTP 授权码等凭据，不入库）
+config-example.yaml
+cmt.example.com.conf
+dwx-comment.conf
+dwx-comment-example.service
 
 # 部署凭据（SSH 私钥等，不入库）
 .deploy/
@@ -47,3 +58,7 @@ front/comment.min.css
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# Python 缓存
+__pycache__/
+*.pyc

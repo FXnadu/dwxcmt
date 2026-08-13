@@ -1188,6 +1188,20 @@
       : this.createCommentNode(comment, 1, comment.parentId || 0);
     node.classList.add('lc-pending');
     node.setAttribute('title', '待审核：审核通过后对所有人可见');
+    // 审核中标识：明确告知该评论尚未通过审核（审核通过前回复会被服务端拒绝）
+    var pendingMeta = node.querySelector('.lc-meta');
+    if (pendingMeta) {
+      var tag = document.createElement('span');
+      tag.className = 'lc-pending-tag';
+      tag.textContent = '审核中';
+      pendingMeta.appendChild(tag);
+    }
+    // 服务端仅允许回复已审核评论，禁用待审核评论的回复按钮，避免报错
+    var pendingReplyBtn = node.querySelector('.lc-reply');
+    if (pendingReplyBtn) {
+      pendingReplyBtn.disabled = true;
+      pendingReplyBtn.setAttribute('title', '审核通过后方可回复');
+    }
 
     var appended = false;
     var parent = null;

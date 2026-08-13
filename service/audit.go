@@ -65,6 +65,30 @@ func (s *Service) DeleteComment(id int64) (int64, error) {
 		return 0, err
 	}
 
+	// 先收集将被删除的评论 ID（根评论含级联子树），
+	// 用于清理头像代理的 avatar:email:{id} 内存映射（见 service/avatar.go）
+	var ids []int64
+	if c.ParentID == 0 {
+		rows, err := s.DB.Query(`SELECT id FROM comments WHERE id = ? OR root_id = ?`, id, id)
+		if err != nil {
+			return 0, err
+		}
+		for rows.Next() {
+			var cid int64
+			if err := rows.Scan(&cid); err != nil {
+				rows.Close()
+				return 0, err
+			}
+			ids = append(ids, cid)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return 0, err
+		}
+	} else {
+		ids = []int64{id}
+	}
+
 	var res sql.Result
 	if c.ParentID == 0 {
 		// 根评论：先清理整棵子树（根+全部回复）的点赞记录，再级联删除，
@@ -90,6 +114,10 @@ func (s *Service) DeleteComment(id int64) (int64, error) {
 		return 0, err
 	}
 	s.InvalidatePage(c.Site, c.PageID)
+	// 同步失效头像内存映射：删除立即生效，关闭「已删评论头像最多可访问 60s」窗口
+	for _, cid := range ids {
+		s.Cache.Delete(avatarEmailKey(cid))
+	}
 	return deleted, nil
 }
 

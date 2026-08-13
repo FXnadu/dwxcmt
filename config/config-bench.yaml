@@ -1,0 +1,52 @@
+# dwxComment 容量基准专用配置（测真实读/写吞吐；不参与生产）
+# 与 config-stress.yaml 的唯一区别：限流放宽到 100 万/秒、100 万条/日（等效不限流），
+# 用于测量服务在「限流不成为瓶颈」前提下的真实容量；生产/抗滥用行为仍以 config-stress.yaml 为准。
+# 用法: dwx-comment.exe -config config/config-bench.yaml （工作目录指向本仓库外任意目录，DB 路径相对 cwd）
+server:
+  port: 8080
+  mode: release
+
+database:
+  path: ./bench.db
+
+auth:
+  jwt_secret: "stress-test-secret-9f8e7d6c5b4a39281706f5e4d3c2b1a0"
+  jwt_ttl: 86400
+
+qq_oauth:
+  app_id: ""
+  app_key: ""
+  redirect_uri: ""
+
+github_oauth:
+  client_id: ""
+  client_secret: ""
+  redirect_uri: ""
+
+smtp:
+  host: ""
+  port: 587
+  username: ""
+  password: ""
+  use_ssl: false
+
+# 容量基准：放宽限流，让并发真实打穿服务（生产为 5 rps / 20 条/天，抗滥用压测为 50 rps / 1000 条/天）
+rate_limit:
+  requests_per_second: 1000000
+  comments_per_day: 1000000
+
+comment:
+  content_max_length: 500
+  nick_max_length: 20
+  max_pinned_per_page: 3
+  max_reply_depth: 3
+
+cors:
+  allowed_origins:
+    - "http://localhost:8080"
+    - "http://127.0.0.1:8080"
+
+trusted_proxy:
+  proxies:
+    - "127.0.0.1/32"
+    - "::1/128"

@@ -1,8 +1,6 @@
 package model
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -113,26 +111,14 @@ func (d CommentDTO) MarshalJSON() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// avatarCandidates 有邮箱时返回有序的真实头像候选地址（前端按顺序加载，全部失败再回退字母头像）。
-// 只返回第三方服务的查询地址，不暴露邮箱本身。
-// 仅使用 Cravatar 国内 CDN；gravatar.com 国内直连慢/常挂起（曾导致页面加载拖慢数秒），已移除。
-// QQ 邮箱（@qq.com 且本地为纯数字 QQ 号）不走腾讯 qlogo 直链，而是返回本服务代理地址
-// /api/v1/avatars/{id}（由后端代拉图片并磁盘缓存），避免在公开响应中暴露 QQ 号（= 邮箱前缀）。
-// 代理地址放最前：命中缓存时毫秒级返回，不再被第三方慢请求串行拖累。
+// avatarCandidates 有邮箱时返回本服务头像代理地址（无邮箱返回 nil，前端回退字母头像）。
+// 所有邮箱用户统一走 /api/v1/avatars/{id}：公开响应不携带邮箱或其哈希，
+// 杜绝 md5 字典爆破与跨站关联风险；由服务端按邮箱类型代拉（QQ qlogo / Cravatar）并磁盘缓存。
 func avatarCandidates(id int64, email string) []string {
 	if email == "" {
 		return nil
 	}
-	lower := strings.ToLower(strings.TrimSpace(email))
-	sum := md5.Sum([]byte(lower))
-	hash := hex.EncodeToString(sum[:])
-	cands := []string{
-		"https://cravatar.cn/avatar/" + hash + "?d=404&s=48",
-	}
-	if qq := QQFromEmail(lower); qq != "" {
-		cands = append([]string{"/api/v1/avatars/" + strconv.FormatInt(id, 10)}, cands...)
-	}
-	return cands
+	return []string{"/api/v1/avatars/" + strconv.FormatInt(id, 10)}
 }
 
 // QQFromEmail 提取 QQ 邮箱中的 QQ 号（@qq.com 且本地部分须为纯数字），非 QQ 邮箱返回空串

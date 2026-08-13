@@ -76,6 +76,11 @@ type CommentConfig struct {
 	NickMaxLength    int `yaml:"nick_max_length"`
 	MaxPinnedPerPage int `yaml:"max_pinned_per_page"`
 	MaxReplyDepth    int `yaml:"max_reply_depth"`
+	// AvatarCacheTTL 成功头像缓存 TTL（秒），0=默认 7 天；惰性过期，物理文件由定时清理回收
+	AvatarCacheTTL int `yaml:"avatar_cache_ttl"`
+	// AvatarCleanIntervalHours 头像缓存清理间隔（小时），0=仅启动时清理一次；默认 720（每月）。
+	// 只删除读取路径已失效的文件（过期缓存/标记、残留 tmp、非法命名孤儿），不影响线上命中
+	AvatarCleanIntervalHours int `yaml:"avatar_clean_interval_hours"`
 }
 
 type CORSConfig struct {
@@ -107,6 +112,8 @@ func Default() *Config {
 			NickMaxLength:    20,
 			MaxPinnedPerPage: 3,
 			MaxReplyDepth:    3,
+			AvatarCacheTTL:            7 * 24 * 3600, // 成功头像缓存 7 天
+			AvatarCleanIntervalHours: 30 * 24,       // 清理间隔 30 天（每月）
 		},
 		// 默认只信任本机回环，防止直连场景下伪造 X-Forwarded-For 绕过限流。
 		// 生产部署若前置 Nginx/CDN，请在 config.yaml 中追加其出口 IP/CIDR。
