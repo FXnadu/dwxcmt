@@ -17,6 +17,16 @@ dwxComment 是面向静态博客的自托管评论系统。后端由 Go 标准�
 - **安全**：全参数化 SQL；JWT 放在请求头（免疫 CSRF）；错误信息不暴露内部细节；首个注册者自动成为站长，后续注册需站长审批
 - **邮件通知**：新评论 / 管理员回复异步邮件通知
 
+## 界面预览
+
+<div align="center">
+  <img src="screenshots/comment-widget.png" alt="评论区组件" width="48%">
+  <img src="screenshots/admin-all.png" alt="评论管理总览" width="48%">
+  <br/>
+  <img src="screenshots/admin-settings.png" alt="站点设置" width="48%">
+  <img src="screenshots/admin-accounts.png" alt="账号管理" width="48%">
+</div>
+
 ## 技术栈
 
 | 层级 | 选择 | 理由 |

@@ -42,6 +42,9 @@ dwx-comment-denjuy.service
 # 部署凭据（SSH 私钥等，不入库）
 .deploy/
 
+# 运行时缓存（头像磁盘缓存等）
+data/
+
 # 编译产物
 dwx-comment
 dwx-comment.exe
