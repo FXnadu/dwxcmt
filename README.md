@@ -106,9 +106,10 @@ dwxcmt/
 ├── front/               # 静态前端（评论组件 + 管理后台）
 ├── docs/                # 项目文档（见下）
 ├── scripts/             # 压测 / 打包 / 运维脚本
-├── build.ps1            # 一键打包（自动递增版本号）
-└── docs-site/           # 文档站点页面
+└── build.ps1            # 一键打包（自动递增版本号）
 ```
+
+> 项目介绍文档站点已部署至 <https://deepwhitex.com/dwxcmt/>。
 
 ## 文档
 
