@@ -19,6 +19,9 @@ stress.db-shm
 *.bak-*
 *.db.pre-acceptance.bak
 
+# 个人博客文章（不属于代码仓库，勿入库）
+blog-*.md
+
 # 迁移调试数据目录（含 .env 密钥 / sqlite 用户数据，禁止入库）
 waline_*/
 
