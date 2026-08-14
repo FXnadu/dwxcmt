@@ -109,7 +109,7 @@ dwxcmt/
 └── build.ps1            # 一键打包（自动递增版本号）
 ```
 
-> 项目介绍文档站点已部署至 <https://deepwhitex.com/dwxcmt/>。
+> 性能测试报告（含图表）已发布至 <https://deepwhitex.com/dwxcmt/>。
 
 ## 文档
 
