@@ -13,7 +13,7 @@ dwxComment 是面向静态博客的自托管评论系统。后端由 Go 标准�
 - **自研 LRU 缓存**：512 条 + 60 秒过期；审核通过 / 删除 / 置顶时主动清除该文章全部分页缓存
 - **三层限流**：Nginx 全局限流 + Go 滑动窗口（单 IP 每秒 ≤5 次）+ 内容级计数器（单 IP 每日 ≤20 条），外加同页重复内容拦截
 - **头像隐私保护**：前端永不接触邮箱字段；QQ 邮箱头像走服务端代理缓存，失败自动回退 Cravatar / 字母头像
-- **数据迁移**：Waline / Twikoo / Disqus 的 JSON 直接导入，单次事务、失败全回滚，支持一键备份与分批导入
+- **数据迁移**：Waline JSON 完整适配（字段、审核状态、置顶、父子层级全保留），Twikoo / Disqus 支持基础字段导入；单次事务、失败全回滚，支持一键备份与分批导入
 - **安全**：全参数化 SQL；JWT 放在请求头（免疫 CSRF）；错误信息不暴露内部细节；首个注册者自动成为站长，后续注册需站长审批
 - **邮件通知**：新评论 / 管理员回复异步邮件通知
 
@@ -74,7 +74,7 @@ curl http://localhost:8080/api/v1/health   # 健康检查，返回版本号
 
 ### 4. 接入前端
 
-将 [`front/comment.css`](front/comment.css)、[`front/comment.js`](front/comment.js) 引入博客页面，参照 [`front/comment.html`](front/comment.html) 中的用法（页面标识默认取路径名，可在容器上显式指定）。页面 ID 的映射规则见 [08-数据迁移指南](docs/08-数据迁移指南.md)。
+将 [`front/comment.css`](front/comment.css)、[`front/comment.js`](front/comment.js) 引入博客页面，参照 [`front/comment.html`](front/comment.html) 中的用法。页面 ID（`page_id`）是评论归属页面的唯一标识：组件默认取当前页面的路径名（如 `/post/hello.html`），也可在容器元素上通过 `data-page-id` 属性显式覆盖。
 
 ### 5. 管理后台
 
@@ -123,4 +123,4 @@ go test ./...   # 单元 + 集成测试（含邮件流、迁移导入、头像�
 
 ## 许可证
 
-暂无（如有需要请自行添加）。
+[MIT](LICENSE)
